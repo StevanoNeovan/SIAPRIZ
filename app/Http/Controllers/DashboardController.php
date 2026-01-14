@@ -28,6 +28,6 @@ class DashboardController extends Controller
             $request->tanggal_akhir
         );
         
-        return view('dashboard.index', $data);
+        return view('dashboard', $data);
     }
 }

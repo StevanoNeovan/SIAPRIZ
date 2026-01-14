@@ -14,14 +14,19 @@ class DashboardRepository implements DashboardRepositoryInterface
      */
     public function getSummary(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): ?object
     {
-        $results = DB::select('CALL sp_ambil_data_dashboard(?, ?, ?)', [
-            $idPerusahaan,
-            $tanggalMulai,
-            $tanggalAkhir
-        ]);
-        
-        // SP returns 3 result sets, we take the first one (summary)
-        return !empty($results[0]) ? $results[0][0] : null;
+        $result = DB::select('CALL sp_ambil_data_dashboard(?, ?, ?)', [
+    $idPerusahaan,
+    $tanggalMulai,
+    $tanggalAkhir
+    ]);
+
+    $summary = $result[0];
+
+    $totalOrder = $summary->total_order;
+    $produkUnik = $summary->produk_unik;
+
+    return $result[0] ?? null;
+
     }
     
     /**
