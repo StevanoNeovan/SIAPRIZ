@@ -1,10 +1,33 @@
 <?php
+// app/Models/Marketplace.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Marketplace extends Model
 {
-    //
+    use HasFactory;
+
+    protected $table = 'marketplace';
+    protected $primaryKey = 'id_marketplace';
+    
+    const CREATED_AT = 'dibuat_pada';
+    const UPDATED_AT = 'diperbarui_pada';
+
+    protected $fillable = [
+        'nama_marketplace',
+        'kode_marketplace',
+        'is_aktif',
+    ];
+
+    protected $casts = [
+        'is_aktif' => 'boolean',
+    ];
+
+    public function penjualanTransaksi()
+    {
+        return $this->hasMany(PenjualanTransaksi::class, 'id_marketplace', 'id_marketplace');
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+// app/Models/Pengguna.php
 
 namespace App\Models;
 
@@ -24,6 +25,7 @@ class Pengguna extends Authenticatable
         'password',
         'nama_lengkap',
         'is_aktif',
+        'login_terakhir',
     ];
 
     protected $hidden = [
@@ -55,6 +57,11 @@ class Pengguna extends Authenticatable
     public function isCEO(): bool
     {
         return $this->role->nama_role === 'CEO';
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role->nama_role === $roleName;
     }
 
     // Override getAuthPassword for custom password field

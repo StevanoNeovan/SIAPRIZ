@@ -31,8 +31,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
     
-    // Administrator only routes (will be added in next phases)
-    Route::middleware('role:Administrator')->group(function () {
-        // Upload penjualan, manage products, etc
+    // Administrator only routes
+    Route::middleware(['role:Administrator'])->group(function () {
+        // Upload penjualan
+        Route::get('/penjualan/upload', [\App\Http\Controllers\UploadPenjualanController::class, 'index'])
+            ->name('penjualan.upload');
+        Route::post('/penjualan/upload', [\App\Http\Controllers\UploadPenjualanController::class, 'store'])
+            ->name('penjualan.upload.store');
+        
+        // Profil Usaha
+        Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'edit'])
+            ->name('profil-usaha.edit');
+        Route::put('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'update'])
+            ->name('profil-usaha.update');
     });
+    
+    // Infografis - accessible by both roles
+    Route::get('/infografis', [\App\Http\Controllers\InfografisController::class, 'index'])
+        ->name('infografis.index');
 });

@@ -1,31 +1,31 @@
 <?php
-// app/Http/Requests/LoginRequest.php
+// app/Http/Middleware/CheckRole.php
 
-namespace App\Http\Requests;
+namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class LoginRequest extends FormRequest
+class CheckRole
 {
-    public function authorize(): bool
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        return true;
-    }
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
 
-    public function rules(): array
-    {
-        return [
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
-            'remember' => ['nullable', 'boolean'],
-        ];
-    }
+        $userRole = auth()->user()->role->nama_role;
 
-    public function messages(): array
-    {
-        return [
-            'username.required' => 'Username wajib diisi.',
-            'password.required' => 'Password wajib diisi.',
-        ];
+        if (!in_array($userRole, $roles)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        return $next($request);
     }
 }

@@ -78,8 +78,8 @@ class DashboardService
             return [
                 'nama' => $item->nama_marketplace,
                 'total_order' => $item->total_order,
-                'pendapatan' => $item->pendapatan,
-                'pendapatan_formatted' => 'Rp ' . number_format($item->pendapatan, 0, ',', '.'),
+                'pendapatan' => $item->pendapatan_bersih,
+                'pendapatan_formatted' => 'Rp ' . number_format($item->pendapatan_bersih, 0, ',', '.'),
                 'margin' => $item->profit_margin_persen ?? 0
             ];
         }, $data);

@@ -275,3 +275,6 @@
         @endif
     </body>
 </html>
+
+
+use Illuminate\Support\Facades\Hash; use App\Models\Pengguna; $user = Pengguna::where('username', 'admin_siapriz')->first(); $user->password = Hash::make('admin123'); $user->save();
