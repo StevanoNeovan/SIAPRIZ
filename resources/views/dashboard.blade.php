@@ -102,51 +102,159 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Sales Trend Chart -->
         <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Tren Penjualan</h3>
-            <canvas id="salesTrendChart"></canvas>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Tren Penjualan Harian</h3>
+            <div class="relative h-64">
+                <canvas id="salesTrendChart"></canvas>
+            </div>
         </div>
 
         <!-- Marketplace Performance Chart -->
         <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Performa Per Marketplace</h3>
-            <canvas id="marketplaceChart"></canvas>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 1</span>
+                Performa Per Marketplace
+            </h3>
+            <div class="relative h-64">
+                <canvas id="marketplaceChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Top Products Table -->
+    <!-- Requirement 1: Kinerja Penjualan Per Marketplace (Detail Table) -->
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Produk Terlaris</h3>
+            <h3 class="text-lg font-semibold text-gray-900">
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 1</span>
+                Detail Kinerja Per Marketplace
+            </h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Produk</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Terjual</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pendapatan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Order</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Terjual</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan Kotor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Komisi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan Bersih</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Margin (%)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($marketplace as $mp)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $mp['nama'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($mp['total_order']) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($mp['item_terjual']) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($mp['pendapatan_kotor'], 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">Rp {{ number_format($mp['komisi'], 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{{ $mp['pendapatan_formatted'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $mp['margin'] }}%</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data marketplace</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Requirement 3: Top Products (Kinerja Total Per Produk) -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 3</span>
+                Produk Terlaris - Total Semua Marketplace
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ranking</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Produk</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Terjual</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($top_products as $index => $product)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $product->nama_produk }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->sku }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($index < 3)
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full 
+                                        {{ $index === 0 ? 'bg-yellow-100 text-yellow-800' : '' }}
+                                        {{ $index === 1 ? 'bg-gray-100 text-gray-800' : '' }}
+                                        {{ $index === 2 ? 'bg-orange-100 text-orange-800' : '' }}
+                                        font-bold">
+                                        {{ $index + 1 }}
+                                    </span>
+                                @else
+                                    <span class="text-sm text-gray-900">{{ $index + 1 }}</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $product->nama_produk }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->kategori ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($product->total_terjual) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($product->total_pendapatan, 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">Rp {{ number_format($product->total_pendapatan, 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($product->jumlah_transaksi) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                Belum ada data produk
-                            </td>
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data produk</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Requirement 2: Kinerja Produk Per Marketplace -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 2</span>
+                Kinerja Produk Per Marketplace
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">Detail penjualan produk di setiap marketplace</p>
+        </div>
+        <div class="p-6">
+            @forelse($product_per_marketplace as $marketplace_name => $products)
+                <div class="mb-6 last:mb-0">
+                    <h4 class="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                        <span class="bg-indigo-500 text-white px-3 py-1 rounded-md mr-2">{{ $marketplace_name }}</span>
+                    </h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Nama Produk</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Total Terjual</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Pendapatan</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Order</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach($products as $product)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-2 text-sm text-gray-900">{{ $product['nama_produk'] }}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-900">{{ number_format($product['total_terjual']) }}</td>
+                                        <td class="px-4 py-2 text-sm text-green-600 font-medium">{{ $product['total_pendapatan_formatted'] }}</td>
+                                        <td class="px-4 py-2 text-sm text-gray-500">{{ number_format($product['jumlah_order']) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @empty
+                <p class="text-center text-sm text-gray-500 py-4">Belum ada data produk per marketplace</p>
+            @endforelse
         </div>
     </div>
 </div>
@@ -154,53 +262,75 @@
 <!-- Chart.js Script -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // Sales Trend Chart
-    const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
-    new Chart(salesCtx, {!! json_encode($chart_data) !!});
+    /* =========================
+       SALES TREND CHART
+    ==========================*/
+    const salesData = @json($chart_data);
 
-    // Marketplace Performance Chart
-    const marketplaceCtx = document.getElementById('marketplaceChart').getContext('2d');
-    new Chart(marketplaceCtx, {
-        type: 'bar',
+    new Chart(document.getElementById('salesTrendChart'), {
+        type: 'line',
         data: {
-            labels: {!! json_encode(array_column($marketplace, 'nama')) !!},
+            labels: salesData.labels,
             datasets: [{
-                label: 'Pendapatan',
-                data: {!! json_encode(array_column($marketplace, 'pendapatan')) !!},
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 206, 86, 0.5)',
-                    'rgba(75, 192, 192, 0.5)',
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                ],
-                borderWidth: 1
+                label: 'Pendapatan Harian',
+                data: salesData.pendapatan,
+                borderColor: 'rgb(79, 70, 229)',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) =>
+                            'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
+                        afterLabel: (ctx) =>
+                            'Total Order: ' + salesData.total_order[ctx.dataIndex]
+                    }
+                }
+            }
+        }
+    });
+
+
+    /* =========================
+       MARKETPLACE CHART
+    ==========================*/
+    const marketplaceData = @json($marketplace_chart_data);
+    
+
+    new Chart(document.getElementById('marketplaceChart'), {
+        type: 'bar',
+        data: {
+            labels: marketplaceData.labels,
+            datasets: [{
+                label: 'Pendapatan Bersih',
+                data: marketplaceData.pendapatan,
+                backgroundColor: marketplaceData.colors,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) =>
+                            'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
+                        afterLabel: (ctx) =>
+                            'Total Order: ' + marketplaceData.total_order[ctx.dataIndex]
+                    }
+                },
+                legend: { display: false }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return 'Rp ' + value.toLocaleString('id-ID');
-                        }
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
-                        }
+                        callback: (v) => 'Rp ' + v.toLocaleString('id-ID')
                     }
                 }
             }

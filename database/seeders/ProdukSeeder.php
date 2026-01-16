@@ -1,5 +1,6 @@
 <?php
 // database/seeders/ProdukSeeder.php
+// FIXED: harga_dasar not harga_jual
 
 namespace Database\Seeders;
 
@@ -35,11 +36,13 @@ class ProdukSeeder extends Seeder
                 'sku' => $product[0],
                 'nama_produk' => $product[1],
                 'kategori' => $product[2],
-                'harga_dasar' => $product[3],
+                'harga_dasar' => $product[3], // FIXED: harga_dasar not harga_jual
                 'is_aktif' => true,
                 'dibuat_pada' => now(),
                 'diperbarui_pada' => now(),
             ]);
         }
+        
+        $this->command->info('✓ Seeded 15 products');
     }
 }

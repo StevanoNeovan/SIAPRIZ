@@ -14,11 +14,12 @@ class Marketplace extends Model
     protected $primaryKey = 'id_marketplace';
     
     const CREATED_AT = 'dibuat_pada';
-    const UPDATED_AT = 'diperbarui_pada';
+    const UPDATED_AT = null; // No updated_at in marketplace table
 
     protected $fillable = [
         'nama_marketplace',
         'kode_marketplace',
+        'logo_url',
         'is_aktif',
     ];
 

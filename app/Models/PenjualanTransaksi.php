@@ -1,5 +1,6 @@
 <?php
-
+// app/Models/PenjualanTransaksi.php
+// FIXED: Column names sesuai schema database
 
 namespace App\Models;
 
@@ -19,22 +20,26 @@ class PenjualanTransaksi extends Model
     protected $fillable = [
         'id_perusahaan',
         'id_marketplace',
-        'nomor_order',
+        'order_id', // FIXED: not nomor_order
         'tanggal_order',
         'status_order',
-        'total_harga',
+        'total_pesanan', // FIXED: not total_harga
+        'total_diskon', // FIXED: not diskon
         'ongkos_kirim',
-        'biaya_admin',
-        'diskon',
+        'biaya_komisi', // FIXED: not biaya_admin
         'pendapatan_bersih',
+        'nama_customer',
+        'kota_customer',
+        'provinsi_customer',
+        'id_batch_upload',
     ];
 
     protected $casts = [
-        'tanggal_order' => 'datetime',
-        'total_harga' => 'decimal:2',
+        'tanggal_order' => 'date',
+        'total_pesanan' => 'decimal:2',
+        'total_diskon' => 'decimal:2',
         'ongkos_kirim' => 'decimal:2',
-        'biaya_admin' => 'decimal:2',
-        'diskon' => 'decimal:2',
+        'biaya_komisi' => 'decimal:2',
         'pendapatan_bersih' => 'decimal:2',
     ];
 

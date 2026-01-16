@@ -1,5 +1,6 @@
 <?php
 // app/Models/Produk.php
+// FIXED: harga_dasar not harga_jual
 
 namespace App\Models;
 
@@ -21,12 +22,12 @@ class Produk extends Model
         'sku',
         'nama_produk',
         'kategori',
-        'harga_jual',
+        'harga_dasar', // FIXED: not harga_jual
         'is_aktif',
     ];
 
     protected $casts = [
-        'harga_jual' => 'decimal:2',
+        'harga_dasar' => 'decimal:2', // FIXED
         'is_aktif' => 'boolean',
     ];
 

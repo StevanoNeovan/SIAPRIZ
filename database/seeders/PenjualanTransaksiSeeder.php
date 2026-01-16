@@ -1,5 +1,6 @@
 <?php
 // database/seeders/PenjualanTransaksiSeeder.php
+// UPDATED: Sesuai dengan schema database yang baru
 
 namespace Database\Seeders;
 
@@ -18,6 +19,14 @@ class PenjualanTransaksiSeeder extends Seeder
         $transactionId = 1;
         $detailId = 1;
         
+        // Get all products
+        $products = DB::table('produk')->get();
+        
+        if ($products->isEmpty()) {
+            $this->command->error('No products found! Run ProdukSeeder first.');
+            return;
+        }
+        
         // Loop through dates
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             // Random 5-15 transactions per day
@@ -25,76 +34,91 @@ class PenjualanTransaksiSeeder extends Seeder
             
             for ($i = 0; $i < $transactionsPerDay; $i++) {
                 $marketplaceId = rand(1, 4); // Random marketplace
-                $marketplaceName = ['Shopee', 'Tokopedia', 'Lazada', 'Blibli'][$marketplaceId - 1];
+                $marketplaceNames = ['Shopee', 'Tokopedia', 'Lazada', 'Umum'];
+                $marketplaceName = $marketplaceNames[$marketplaceId - 1];
                 
-                // Generate order number
+                // Generate order ID (sesuai kolom 'order_id' bukan 'nomor_order')
                 $orderId = $marketplaceName . '-' . $date->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
                 
                 // Random products (1-3 products per transaction)
                 $numProducts = rand(1, 3);
                 $totalPesanan = 0;
-                $products = [];
+                $productItems = [];
                 
                 for ($p = 0; $p < $numProducts; $p++) {
-                    $productId = rand(1, 15);
-                    $jumlah = rand(1, 3);
+                    $product = $products->random();
+                    $quantity = rand(1, 3);
                     
-                    // Get product price
-                    $hargaDasar = DB::table('produk')
-                        ->where('id_produk', $productId)
-                        ->value('harga_dasar');
-                    
-                    $subtotal = $hargaDasar * $jumlah;
+                    // Harga satuan (random variation ±10% dari harga dasar)
+                    $hargaSatuan = $product->harga_dasar * (1 + (rand(-10, 10) / 100));
+                    $subtotal = $hargaSatuan * $quantity;
                     $totalPesanan += $subtotal;
                     
-                    $products[] = [
-                        'id_produk' => $productId,
-                        'jumlah' => $jumlah,
-                        'harga_dasar' => $hargaDasar,
+                    $productItems[] = [
+                        'id_produk' => $product->id_produk,
+                        'sku' => $product->sku,
+                        'nama_produk' => $product->nama_produk,
+                        'variasi' => null, // Could add random variations if needed
+                        'quantity' => $quantity,
+                        'harga_satuan' => $hargaSatuan,
                         'subtotal' => $subtotal,
                     ];
                 }
                 
-                // Calculate fees
+                // Calculate fees (sesuai schema baru)
                 $ongkosKirim = rand(10000, 50000);
-                $biayaKomisi = $totalPesanan * (rand(2, 5) / 100); // 2-5% admin fee
-                $diskon = rand(0, 1) ? rand(5000, 50000) : 0; // 50% chance of discount
+                $totalDiskon = rand(0, 1) ? rand(5000, 50000) : 0; // 50% chance
+                $biayaKomisi = $totalPesanan * (rand(3, 8) / 100); // 3-8% komisi marketplace
                 
-                $pendapatanBersih = $totalPesanan + $ongkosKirim - $biayaKomisi - $diskon;
+                $pendapatanBersih = $totalPesanan - $totalDiskon + $ongkosKirim - $biayaKomisi;
                 
-                // Status order (90% completed, 10% others)
-                $statusOptions = ['selesai', 'selesai', 'selesai', 'selesai', 'selesai', 'selesai', 'selesai', 'selesai', 'selesai', 'dibatalkan'];
+                // Status order (90% selesai, 10% others)
+                $statusOptions = array_merge(
+                    array_fill(0, 9, 'selesai'),
+                    ['dibatalkan']
+                );
                 $status = $statusOptions[rand(0, 9)];
                 
-                // Insert transaction
+                // Generate customer data
+                $cities = ['Jakarta', 'Surabaya', 'Bandung', 'Medan', 'Semarang', 'Makassar', 'Palembang', 'Tangerang', 'Depok', 'Bekasi'];
+                $provinces = ['DKI Jakarta', 'Jawa Timur', 'Jawa Barat', 'Sumatera Utara', 'Jawa Tengah', 'Sulawesi Selatan', 'Sumatera Selatan', 'Banten'];
+                
+                $city = $cities[array_rand($cities)];
+                $province = $provinces[array_rand($provinces)];
+                
+                // Insert transaction (FIXED COLUMN NAMES)
                 DB::table('penjualan_transaksi')->insert([
                     'id_transaksi' => $transactionId,
                     'id_perusahaan' => 1,
                     'id_marketplace' => $marketplaceId,
-                    'order_id' => $orderId,
+                    'order_id' => $orderId, // FIXED: order_id not nomor_order
                     'tanggal_order' => $date->copy()->setTime(rand(8, 20), rand(0, 59)),
                     'status_order' => $status,
-                    'total_pesanan' => $totalPesanan,
+                    'total_pesanan' => $totalPesanan, // FIXED: total_pesanan not total_harga
+                    'total_diskon' => $totalDiskon, // FIXED: total_diskon not diskon
                     'ongkos_kirim' => $ongkosKirim,
-                    'biaya_komisi' => $biayaKomisi,
-                    'total_diskon' => $diskon,
+                    'biaya_komisi' => $biayaKomisi, // FIXED: biaya_komisi not biaya_admin
                     'pendapatan_bersih' => $status === 'selesai' ? $pendapatanBersih : 0,
+                    'nama_customer' => 'Customer-' . rand(1000, 9999),
+                    'kota_customer' => $city,
+                    'provinsi_customer' => $province,
+                    'id_batch_upload' => null,
                     'dibuat_pada' => now(),
                     'diperbarui_pada' => now(),
                 ]);
                 
-
                 // Insert transaction details
-                foreach ($products as $product) {
+                foreach ($productItems as $item) {
                     DB::table('penjualan_transaksi_detail')->insert([
                         'id_detail' => $detailId++,
                         'id_transaksi' => $transactionId,
-                        'id_produk' => $product['id_produk'],
-                        'nama_produk' => DB::table('produk')->where('id_produk', $product['id_produk'])->value('nama_produk'),
-                        'sku' =>  DB::table('produk')->where('id_produk', $product['id_produk'])->value('sku'),
-                        'quantity' => $product['jumlah'],
-                        'harga_satuan' => $product['harga_dasar'],
-                        'subtotal' => $product['subtotal'],
+                        'id_produk' => $item['id_produk'],
+                        'sku' => $item['sku'],
+                        'nama_produk' => $item['nama_produk'],
+                        'variasi' => $item['variasi'],
+                        'quantity' => $item['quantity'],
+                        'harga_satuan' => $item['harga_satuan'],
+                        'subtotal' => $item['subtotal'],
                         'dibuat_pada' => now(),
                     ]);
                 }
@@ -103,6 +127,7 @@ class PenjualanTransaksiSeeder extends Seeder
             }
         }
         
-        $this->command->info('Generated ' . ($transactionId - 1) . ' transactions with ' . ($detailId - 1) . ' transaction details');
+        $this->command->info('✓ Generated ' . ($transactionId - 1) . ' transactions');
+        $this->command->info('✓ Generated ' . ($detailId - 1) . ' transaction details');
     }
 }

@@ -1,5 +1,6 @@
 <?php
 // app/Models/PenjualanTransaksiDetail.php
+// FIXED: Column names sesuai schema
 
 namespace App\Models;
 
@@ -14,18 +15,21 @@ class PenjualanTransaksiDetail extends Model
     protected $primaryKey = 'id_detail';
     
     const CREATED_AT = 'dibuat_pada';
-    const UPDATED_AT = 'diperbarui_pada';
+    const UPDATED_AT = null; // No updated_at in schema
 
     protected $fillable = [
         'id_transaksi',
         'id_produk',
-        'jumlah',
+        'sku',
+        'nama_produk',
+        'variasi',
+        'quantity', // FIXED: not jumlah
         'harga_satuan',
         'subtotal',
     ];
 
     protected $casts = [
-        'jumlah' => 'integer',
+        'quantity' => 'integer', // FIXED
         'harga_satuan' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];

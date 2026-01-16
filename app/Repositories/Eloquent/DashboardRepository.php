@@ -5,7 +5,6 @@ namespace App\Repositories\Eloquent;
 
 use App\Repositories\Contracts\DashboardRepositoryInterface;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
 
 class DashboardRepository implements DashboardRepositoryInterface
 {
@@ -14,19 +13,18 @@ class DashboardRepository implements DashboardRepositoryInterface
      */
     public function getSummary(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): ?object
     {
-        $result = DB::select('CALL sp_ambil_data_dashboard(?, ?, ?)', [
-    $idPerusahaan,
-    $tanggalMulai,
-    $tanggalAkhir
-    ]);
+        try {
+            $result = DB::select('CALL sp_ambil_data_dashboard(?, ?, ?)', [
+                $idPerusahaan,
+                $tanggalMulai,
+                $tanggalAkhir
+            ]);
 
-    $summary = $result[0];
-
-    $totalOrder = $summary->total_order;
-    $produkUnik = $summary->produk_unik;
-
-    return $result[0] ?? null;
-
+            return $result[0] ?? null;
+        } catch (\Exception $e) {
+            Log::error('Error in getSummary: ' . $e->getMessage());
+            return null;
+        }
     }
     
     /**
@@ -34,45 +32,83 @@ class DashboardRepository implements DashboardRepositoryInterface
      */
     public function getMarketplacePerformance(int $idPerusahaan, int $tahun, int $bulan): array
     {
-        $results = DB::select('CALL sp_perbandingan_marketplace(?, ?, ?)', [
-            $idPerusahaan,
-            $tahun,
-            $bulan
-        ]);
-        
-        return $results ?? [];
+        try {
+            $results = DB::select('CALL sp_perbandingan_marketplace(?, ?, ?)', [
+                $idPerusahaan,
+                $tahun,
+                $bulan
+            ]);
+            
+            return $results ?? [];
+        } catch (\Exception $e) {
+            \Log::error('Error in getMarketplacePerformance: ' . $e->getMessage());
+            return [];
+        }
     }
     
     /**
-     * Get top selling products
+     * Get top selling products for a period
      */
     public function getTopProducts(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir, int $limit = 10): array
     {
-        // Using view instead of SP for this one
-        return DB::table('v_produk_terlaris')
-            ->where('id_perusahaan', $idPerusahaan)
-            ->limit($limit)
-            ->get()
-            ->toArray();
+        try {
+            $results = DB::select('CALL sp_produk_terlaris_per_periode(?, ?, ?, ?)', [
+                $idPerusahaan,
+                $tanggalMulai,
+                $tanggalAkhir,
+                $limit
+            ]);
+            
+            return $results ?? [];
+        } catch (\Exception $e) {
+            \Log::error('Error in getTopProducts: ' . $e->getMessage());
+            return [];
+        }
     }
     
     /**
-     * Get sales trend for charts
+     * Get product performance per marketplace
+     */
+    public function getProductPerformancePerMarketplace(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): array
+    {
+        try {
+            $results = DB::select('CALL sp_kinerja_produk_per_marketplace(?, ?, ?)', [
+                $idPerusahaan,
+                $tanggalMulai,
+                $tanggalAkhir
+            ]);
+            
+            return $results ?? [];
+        } catch (\Exception $e) {
+            \Log::error('Error in getProductPerformancePerMarketplace: ' . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Get sales trend for charts (daily aggregation)
      */
     public function getSalesTrend(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): array
     {
-        return DB::table('penjualan_transaksi')
-            ->select(
-                DB::raw('DATE(tanggal_order) as tanggal'),
-                DB::raw('SUM(pendapatan_bersih) as pendapatan'),
-                DB::raw('COUNT(*) as jumlah_order')
-            )
-            ->where('id_perusahaan', $idPerusahaan)
-            ->whereBetween('tanggal_order', [$tanggalMulai, $tanggalAkhir])
-            ->where('status_order', 'selesai')
-            ->groupBy('tanggal')
-            ->orderBy('tanggal')
-            ->get()
-            ->toArray();
+        try {
+            $results = DB::table('penjualan_transaksi')
+                ->select(
+                    DB::raw('DATE(tanggal_order) as tanggal'),
+                    DB::raw('SUM(pendapatan_bersih) as pendapatan'),
+                    DB::raw('COUNT(DISTINCT id_transaksi) as jumlah_order')
+                )
+                ->where('id_perusahaan', $idPerusahaan)
+                ->whereBetween('tanggal_order', [$tanggalMulai, $tanggalAkhir])
+                ->where('status_order', 'selesai')
+                ->groupBy('tanggal')
+                ->orderBy('tanggal')
+                ->get()
+                ->toArray();
+            
+            return $results;
+        } catch (\Exception $e) {
+            \Log::error('Error in getSalesTrend: ' . $e->getMessage());
+            return [];
+        }
     }
 }
