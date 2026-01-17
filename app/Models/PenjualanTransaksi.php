@@ -57,4 +57,31 @@ class PenjualanTransaksi extends Model
     {
         return $this->hasMany(PenjualanTransaksiDetail::class, 'id_transaksi', 'id_transaksi');
     }
+
+    public function logUpload()
+    {
+        return $this->belongsTo(LogUpload::class, 'id_batch_upload', 'id_upload');
+    }
+
+     // Scopes
+    public function scopeSelesai($query)
+    {
+        return $query->where('status_order', 'selesai');
+    }
+    
+    public function scopeByPerusahaan($query, int $idPerusahaan)
+    {
+        return $query->where('id_perusahaan', $idPerusahaan);
+    }
+    
+    public function scopeByMarketplace($query, int $idMarketplace)
+    {
+        return $query->where('id_marketplace', $idMarketplace);
+    }
+    
+    public function scopePeriode($query, string $tanggalMulai, string $tanggalAkhir)
+    {
+        return $query->whereBetween('tanggal_order', [$tanggalMulai, $tanggalAkhir]);
+    }
+
 }

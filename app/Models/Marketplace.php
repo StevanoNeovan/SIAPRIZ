@@ -31,4 +31,20 @@ class Marketplace extends Model
     {
         return $this->hasMany(PenjualanTransaksi::class, 'id_marketplace', 'id_marketplace');
     }
+
+      // Helper methods
+    public static function getByKode(string $kode)
+    {
+        return self::where('kode_marketplace', $kode)
+            ->where('is_aktif', true)
+            ->first();
+    }
+    
+    public static function getAllActive()
+    {
+        return self::where('is_aktif', true)
+            ->orderBy('nama_marketplace')
+            ->get();
+    }
+
 }

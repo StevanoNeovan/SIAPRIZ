@@ -40,4 +40,25 @@ class Produk extends Model
     {
         return $this->hasMany(PenjualanTransaksiDetail::class, 'id_produk', 'id_produk');
     }
+
+     // Helper methods
+    public static function findOrCreateBySKU(int $idPerusahaan, string $sku, array $data = [])
+    {
+        $produk = self::where('id_perusahaan', $idPerusahaan)
+            ->where('sku', $sku)
+            ->first();
+        
+        if (!$produk) {
+            $produk = self::create([
+                'id_perusahaan' => $idPerusahaan,
+                'sku' => $sku,
+                'nama_produk' => $data['nama_produk'] ?? $sku,
+                'kategori' => $data['kategori'] ?? null,
+                'harga_dasar' => $data['harga_dasar'] ?? 0,
+                'is_aktif' => true,
+            ]);
+        }
+        
+        return $produk;
+    }
 }

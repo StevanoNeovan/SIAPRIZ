@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
     // Dashboard - accessible by both Administrator & CEO
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    // Infografis - accessible by both roles
+    Route::get('/infografis', [\App\Http\Controllers\InfografisController::class, 'index'])
+        ->name('infografis.index');
     
     // Administrator only routes
     Route::middleware(['role:Administrator'])->group(function () {
@@ -38,6 +42,8 @@ Route::middleware('auth')->group(function () {
             ->name('penjualan.upload');
         Route::post('/penjualan/upload', [\App\Http\Controllers\UploadPenjualanController::class, 'store'])
             ->name('penjualan.upload.store');
+         Route::get('/penjualan/upload/{id}', [\App\Http\Controllers\UploadPenjualanController::class, 'show'])
+            ->name('penjualan.upload-detail');
         
         // Profil Usaha
         Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'edit'])
@@ -46,7 +52,5 @@ Route::middleware('auth')->group(function () {
             ->name('profil-usaha.update');
     });
     
-    // Infografis - accessible by both roles
-    Route::get('/infografis', [\App\Http\Controllers\InfografisController::class, 'index'])
-        ->name('infografis.index');
+    
 });
