@@ -8,48 +8,40 @@ use App\Models\Produk;
 use App\Models\PenjualanTransaksi;
 use App\Models\PenjualanTransaksiDetail;
 use App\Models\LogUpload;
+use App\Services\Parser\GenericParser;
 use App\Services\Parser\ShopeeParser;
 use App\Services\Parser\TokopediaParser;
 use App\Services\Parser\LazadaParser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class UploadService
 {
     /**
      * Process uploaded file
-     * 
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param int $idPerusahaan
-     * @param int $idPengguna
-     * @param int|null $idMarketplace (optional - will auto-detect if null)
-     * @return array
      */
-    public function processUpload($file, int $idPerusahaan, int $idPengguna, ?int $idMarketplace = null): array
+    public function processUpload($file, int $idPerusahaan, int $idPengguna, int $idMarketplace, bool $useTemplate = true): array
     {
         try {
-            // Auto-detect marketplace if not provided
-            if (!$idMarketplace) {
-                $detectedMarketplace = $this->detectMarketplace($file, $idPerusahaan);
-                if (!$detectedMarketplace) {
-                    throw new \Exception('Format file tidak dikenali. Pastikan file sesuai dengan format Shopee, Tokopedia, atau Lazada.');
-                }
-                $idMarketplace = $detectedMarketplace->id_marketplace;
-            } else {
-                $marketplace = Marketplace::find($idMarketplace);
-                if (!$marketplace) {
-                    throw new \Exception('Marketplace tidak ditemukan.');
-                }
-            }
+            // Store file permanently
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('uploads', $filename, 'public');
             
             // Create upload log
-            $logUpload = $this->createUploadLog($file, $idPerusahaan, $idMarketplace, $idPengguna);
+            $logUpload = $this->createUploadLog($file, $idPerusahaan, $idMarketplace, $idPengguna, $filePath);
             
             // Get appropriate parser
-            $parser = $this->getParser($file, $idPerusahaan, $idMarketplace);
-            
-            if (!$parser->validate()) {
-                throw new \Exception('Format file tidak valid untuk marketplace yang dipilih.');
+            if ($useTemplate) {
+                // Use Generic Parser for template SIAPRIZ
+                $parser = new GenericParser($file, $idPerusahaan, $idMarketplace);
+            } else {
+                // Auto-detect and use marketplace-specific parser
+                $parser = $this->getMarketplaceParser($file, $idPerusahaan, $idMarketplace);
+                
+                if (!$parser->validate()) {
+                    throw new \Exception('Format file tidak sesuai dengan ' . $parser->getMarketplaceCode());
+                }
             }
             
             // Parse file
@@ -91,34 +83,9 @@ class UploadService
     }
     
     /**
-     * Auto-detect marketplace from file
+     * Get marketplace-specific parser
      */
-    private function detectMarketplace($file, int $idPerusahaan): ?Marketplace
-    {
-        $parsers = [
-            'SHOPEE' => ShopeeParser::class,
-            'TOKOPEDIA' => TokopediaParser::class,
-            'LAZADA' => LazadaParser::class,
-        ];
-        
-        foreach ($parsers as $code => $parserClass) {
-            $marketplace = Marketplace::getByKode($code);
-            if (!$marketplace) continue;
-            
-            $parser = new $parserClass($file, $idPerusahaan, $marketplace->id_marketplace);
-            
-            if ($parser->validate()) {
-                return $marketplace;
-            }
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Get parser instance based on marketplace
-     */
-    private function getParser($file, int $idPerusahaan, int $idMarketplace)
+    private function getMarketplaceParser($file, int $idPerusahaan, int $idMarketplace)
     {
         $marketplace = Marketplace::find($idMarketplace);
         
@@ -131,7 +98,7 @@ class UploadService
         $parserClass = $parsers[$marketplace->kode_marketplace] ?? null;
         
         if (!$parserClass) {
-            throw new \Exception('Parser untuk marketplace ini belum tersedia.');
+            throw new \Exception('Parser untuk marketplace ini belum tersedia. Gunakan template SIAPRIZ.');
         }
         
         return new $parserClass($file, $idPerusahaan, $idMarketplace);
@@ -140,13 +107,14 @@ class UploadService
     /**
      * Create upload log entry
      */
-    private function createUploadLog($file, int $idPerusahaan, int $idMarketplace, int $idPengguna): LogUpload
+    private function createUploadLog($file, int $idPerusahaan, int $idMarketplace, int $idPengguna, string $filePath): LogUpload
     {
         return LogUpload::create([
             'id_perusahaan' => $idPerusahaan,
             'id_marketplace' => $idMarketplace,
             'id_pengguna' => $idPengguna,
             'nama_file' => $file->getClientOriginalName(),
+            'file_path' => $filePath,
             'ukuran_file' => $file->getSize(),
             'status_upload' => 'proses',
         ]);
@@ -232,7 +200,7 @@ class UploadService
             'total_baris' => $parseResult['summary']['total_rows'] ?? 0,
             'baris_sukses' => $result['success'],
             'baris_gagal' => $result['failed'],
-            'status_upload' => $result['failed'] > 0 ? 'selesai' : 'selesai',
+            'status_upload' => 'selesai',
             'pesan_error' => !empty($result['errors']) ? implode("\n", array_slice($result['errors'], 0, 5)) : null,
         ]);
     }

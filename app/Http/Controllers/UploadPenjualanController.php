@@ -5,16 +5,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UploadPenjualanRequest;
 use App\Services\UploadService;
+use App\Services\TemplateService;
 use App\Models\Marketplace;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UploadPenjualanController extends Controller
 {
     protected $uploadService;
+    protected $templateService;
     
-    public function __construct(UploadService $uploadService)
+    public function __construct(UploadService $uploadService, TemplateService $templateService)
     {
         $this->uploadService = $uploadService;
+        $this->templateService = $templateService;
     }
     
     /**
@@ -35,15 +39,35 @@ class UploadPenjualanController extends Controller
     }
     
     /**
+     * Download template Excel
+     */
+    public function downloadTemplate()
+    {
+        $filepath = $this->templateService->generateTemplate();
+        
+        return response()->download($filepath)->deleteFileAfterSend(true);
+    }
+    
+    /**
      * Process file upload
      */
     public function store(UploadPenjualanRequest $request)
     {
+        if (!$request->id_marketplace) {
+            return redirect()
+                ->route('penjualan.upload')
+                ->with('error', 'Silakan pilih marketplace terlebih dahulu.');
+        }
+        
+        // Determine upload type: template (true) or direct marketplace CSV (false)
+        $useTemplate = $request->input('upload_type', 'template') === 'template';
+        
         $result = $this->uploadService->processUpload(
             $request->file('file'),
             auth()->user()->id_perusahaan,
             auth()->user()->id_pengguna,
-            $request->input('id_marketplace')
+            $request->input('id_marketplace'),
+            $useTemplate
         );
         
         if ($result['success']) {
@@ -70,5 +94,22 @@ class UploadPenjualanController extends Controller
         return view('penjualan.upload-detail', [
             'log' => $log,
         ]);
+    }
+    
+    /**
+     * Download uploaded file
+     */
+    public function downloadFile(int $id)
+    {
+        $log = \App\Models\LogUpload::where('id_perusahaan', auth()->user()->id_perusahaan)
+            ->findOrFail($id);
+        
+        if (!$log->hasFile()) {
+            return redirect()
+                ->route('penjualan.upload')
+                ->with('error', 'File tidak ditemukan.');
+        }
+        
+        return Storage::disk('public')->download($log->file_path, $log->nama_file);
     }
 }

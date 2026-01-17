@@ -40,11 +40,15 @@ Route::middleware('auth')->group(function () {
         // Upload penjualan
         Route::get('/penjualan/upload', [\App\Http\Controllers\UploadPenjualanController::class, 'index'])
             ->name('penjualan.upload');
+        Route::get('/penjualan/template', [\App\Http\Controllers\UploadPenjualanController::class, 'downloadTemplate'])
+            ->name('penjualan.template');
         Route::post('/penjualan/upload', [\App\Http\Controllers\UploadPenjualanController::class, 'store'])
             ->name('penjualan.upload.store');
-         Route::get('/penjualan/upload/{id}', [\App\Http\Controllers\UploadPenjualanController::class, 'show'])
+        Route::get('/penjualan/upload/{id}', [\App\Http\Controllers\UploadPenjualanController::class, 'show'])
             ->name('penjualan.upload-detail');
-        
+        Route::get('/penjualan/upload/{id}/download', [\App\Http\Controllers\UploadPenjualanController::class, 'downloadFile'])
+            ->name('penjualan.download');
+
         // Profil Usaha
         Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'edit'])
             ->name('profil-usaha.edit');

@@ -6,25 +6,32 @@
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
-    <div>
-        <h2 class="text-2xl font-bold text-gray-900">Upload Data Penjualan</h2>
-        <p class="mt-1 text-sm text-gray-600">
-            Upload file CSV/Excel dari marketplace (Shopee, Tokopedia, Lazada)
-        </p>
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Upload Data Penjualan</h2>
+            <p class="mt-1 text-sm text-gray-600">
+                Upload menggunakan template atau langsung dari CSV marketplace
+            </p>
+        </div>
+        
+        <!-- Download Template Button -->
+        <a href="{{ route('penjualan.template') }}" 
+           class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Download Template Excel
+        </a>
     </div>
 
     <!-- Alert Messages -->
     @if(session('success'))
         <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
             <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-green-700">{{ session('success') }}</p>
-                </div>
+                <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <p class="ml-3 text-sm text-green-700">{{ session('success') }}</p>
             </div>
         </div>
     @endif
@@ -32,14 +39,10 @@
     @if(session('error'))
         <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
             <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-red-700">{{ session('error') }}</p>
-                </div>
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <p class="ml-3 text-sm text-red-700">{{ session('error') }}</p>
             </div>
         </div>
     @endif
@@ -53,13 +56,37 @@
         <form action="{{ route('penjualan.upload.store') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
             @csrf
             
-            <!-- Marketplace Selection (Optional) -->
+            <!-- Upload Type Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    Tipe Upload <span class="text-red-500">*</span>
+                </label>
+                <div class="space-y-3">
+                    <label class="flex items-start p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg cursor-pointer">
+                        <input type="radio" name="upload_type" value="template" class="mt-1" checked>
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">Template SIAPRIZ (Recommended)</div>
+                            <div class="text-sm text-gray-600">Upload menggunakan template Excel yang sudah disediakan. Format konsisten untuk semua marketplace.</div>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-start p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-gray-400">
+                        <input type="radio" name="upload_type" value="direct" class="mt-1">
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900">CSV Langsung dari Marketplace</div>
+                            <div class="text-sm text-gray-600">Upload file CSV/Excel langsung dari Shopee, Tokopedia, atau Lazada (format asli marketplace).</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Marketplace Selection -->
             <div>
                 <label for="id_marketplace" class="block text-sm font-medium text-gray-700 mb-2">
-                    Marketplace (Opsional - Auto Detect)
+                    Marketplace <span class="text-red-500">*</span>
                 </label>
-                <select name="id_marketplace" id="id_marketplace" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">-- Auto Detect --</option>
+                <select name="id_marketplace" id="id_marketplace" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- Pilih Marketplace --</option>
                     @foreach($marketplaces as $marketplace)
                         <option value="{{ $marketplace->id_marketplace }}">{{ $marketplace->nama_marketplace }}</option>
                     @endforeach
@@ -72,7 +99,7 @@
             <!-- File Upload -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    File CSV/Excel <span class="text-red-500">*</span>
+                    File Excel/CSV <span class="text-red-500">*</span>
                 </label>
                 
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition">
@@ -81,17 +108,16 @@
                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <div class="flex text-sm text-gray-600">
-                            <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                            <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
                                 <span>Upload file</span>
-                                <input id="file" name="file" type="file" class="sr-only" accept=".csv,.xlsx,.xls" required>
+                                <input id="file" name="file" type="file" class="sr-only" accept=".xlsx,.xls,.csv" required>
                             </label>
                             <p class="pl-1">atau drag and drop</p>
                         </div>
-                        <p class="text-xs text-gray-500">CSV, XLSX, XLS hingga 10MB</p>
+                        <p class="text-xs text-gray-500">XLSX, XLS, CSV hingga 10MB</p>
                     </div>
                 </div>
                 
-                <!-- File name display -->
                 <div id="file-name" class="mt-2 text-sm text-gray-600 hidden"></div>
                 
                 @error('file')
@@ -100,32 +126,49 @@
             </div>
 
             <!-- Info Box -->
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+            <div id="info-template" class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                        </svg>
+                    <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="ml-3 text-sm text-blue-700">
+                        <p class="font-semibold mb-2">Cara Upload dengan Template:</p>
+                        <ol class="list-decimal ml-5 space-y-1">
+                            <li>Klik tombol "Download Template Excel"</li>
+                            <li>Buka file template, isi data sesuai instruksi</li>
+                            <li>Pilih marketplace yang sesuai</li>
+                            <li>Upload file yang sudah diisi</li>
+                        </ol>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-blue-700">
-                            <strong>Tips:</strong> Pastikan file CSV/Excel sesuai dengan format asli dari marketplace. 
-                            Sistem akan otomatis mendeteksi marketplace jika tidak dipilih manual.
-                        </p>
+                </div>
+            </div>
+            
+            <div id="info-direct" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded hidden">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="ml-3 text-sm text-yellow-700">
+                        <p class="font-semibold mb-2">Upload CSV Langsung:</p>
+                        <ul class="list-disc ml-5 space-y-1">
+                            <li>File harus format asli dari marketplace (jangan diubah)</li>
+                            <li>Pastikan pilih marketplace yang sesuai</li>
+                            <li>Format harus sesuai dengan yang didukung sistem</li>
+                        </ul>
                     </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
             <div class="flex justify-end">
-                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
                     Upload & Proses
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Upload History -->
+    <!-- Upload History (sama seperti sebelumnya) -->
     <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-5 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Riwayat Upload</h3>
@@ -135,12 +178,12 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hasil</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hasil</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -149,8 +192,19 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $log->tanggal_upload->format('d M Y H:i') }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $log->nama_file }}
+                            <td class="px-6 py-4 text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <span class="truncate max-w-xs">{{ $log->nama_file }}</span>
+                                    @if($log->hasFile())
+                                        <a href="{{ route('penjualan.download', $log->id_upload) }}" 
+                                           class="ml-2 text-indigo-600 hover:text-indigo-900" 
+                                           title="Download file">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $log->marketplace->nama_marketplace }}
@@ -177,7 +231,8 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <a href="{{ route('penjualan.upload-detail', $log->id_upload) }}" class="text-indigo-600 hover:text-indigo-900">
+                                <a href="{{ route('penjualan.upload-detail', $log->id_upload) }}" 
+                                   class="text-indigo-600 hover:text-indigo-900">
                                     Detail
                                 </a>
                             </td>
@@ -196,7 +251,7 @@
 </div>
 
 <script>
-    // Show selected file name
+    // File name display
     document.getElementById('file').addEventListener('change', function(e) {
         const fileName = e.target.files[0]?.name;
         const fileNameDiv = document.getElementById('file-name');
@@ -207,6 +262,23 @@
         } else {
             fileNameDiv.classList.add('hidden');
         }
+    });
+    
+    // Toggle info box based on upload type
+    const uploadTypeRadios = document.querySelectorAll('input[name="upload_type"]');
+    const infoTemplate = document.getElementById('info-template');
+    const infoDirect = document.getElementById('info-direct');
+    
+    uploadTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'template') {
+                infoTemplate.classList.remove('hidden');
+                infoDirect.classList.add('hidden');
+            } else {
+                infoTemplate.classList.add('hidden');
+                infoDirect.classList.remove('hidden');
+            }
+        });
     });
 </script>
 @endsection

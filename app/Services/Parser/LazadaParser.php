@@ -3,169 +3,93 @@
 
 namespace App\Services\Parser;
 
+use App\Services\Parser\Contracts\ColumnMapperInterface;
+use App\Services\Parser\Contracts\StatusMapperInterface;
+use App\Services\Parser\Mappers\LazadaColumnMapper;
+use App\Services\Parser\Mappers\LazadaStatusMapper;
+
+/**
+ * Lazada Parser - untuk format CSV asli Lazada
+ */
 class LazadaParser extends AbstractParser
 {
-    /**
-     * Required Lazada CSV columns (FORMAT ASLI LAZADA)
-     * Kolom minimal agar 1 transaksi valid
-     */
-    private const REQUIRED_COLUMNS = [
-        'orderNumber',
-        'status',
-        'itemName',
-        'quantity',
-        'unitPrice',
-    ];
-
-    private array $header = [];
-
+    protected function getColumnMapper(): ColumnMapperInterface
+    {
+        return new LazadaColumnMapper();
+    }
+    
+    protected function getStatusMapper(): StatusMapperInterface
+    {
+        return new LazadaStatusMapper();
+    }
+    
     public function getMarketplaceCode(): string
     {
         return 'LAZADA';
     }
-
-    public function validate(): bool
+    
+    /**
+     * Override parseFinancialData untuk custom logic Lazada
+     */
+    protected function parseFinancialData(array $row, ColumnMapperInterface $columnMapper): array
     {
-        $data = $this->readFile();
-
-        if ($data->isEmpty()) {
-            return false;
-        }
-
-        // Simpan header
-        $this->header = $data->first()->toArray();
-
-        foreach (self::REQUIRED_COLUMNS as $column) {
-            if (!in_array($column, $this->header)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function parse(): array
-    {
-        $data = $this->readFile();
-        $transactions = [];
-        $errors = [];
-
-        // Simpan header
-        $this->header = $data->first()->toArray();
-
-        // Skip header
-        $rows = $data->skip(1);
-
-        // Group by orderNumber
-        $groupedOrders = $rows->groupBy(fn ($row) =>
-            $this->getColumnValue($row, 'orderNumber')
+        // ===== Financial =====
+        $totalPesanan = $this->parseDecimal(
+            $this->getColumnValue($row, 'paidPrice')
         );
 
-        foreach ($groupedOrders as $orderNumber => $orderRows) {
-            try {
-                $firstRow = $orderRows->first();
+        $ongkosKirim = $this->parseDecimal(
+            $this->getColumnValue($row, 'shippingFee')
+        );
 
-                // ===== Financial =====
-                $totalPesanan = $this->parseDecimal(
-                    $this->getColumnValue($firstRow, 'paidPrice')
-                );
+        $biayaKomisi = $this->parseDecimal(
+            $this->getColumnValue($row, 'commission')
+        );
 
-                $ongkosKirim = $this->parseDecimal(
-                    $this->getColumnValue($firstRow, 'shippingFee')
-                );
+        $voucher = $this->parseDecimal(
+            $this->getColumnValue($row, 'sellerDiscountTotal')
+        );
 
-                $biayaKomisi = $this->parseDecimal(
-                    $this->getColumnValue($firstRow, 'commission')
-                );
-
-                $voucher = $this->parseDecimal(
-                    $this->getColumnValue($firstRow, 'sellerDiscountTotal')
-                );
-
-                $pendapatanBersih = $totalPesanan - $biayaKomisi - $voucher;
-
-                // ===== Items =====
-                $items = [];
-
-                foreach ($orderRows as $row) {
-                    $quantity = $this->parseInt(
-                        $this->getColumnValue($row, 'quantity')
-                    );
-
-                    $hargaSatuan = $this->parseDecimal(
-                        $this->getColumnValue($row, 'unitPrice')
-                    );
-
-                    $items[] = [
-                        'sku' => $this->cleanString(
-                            $this->getColumnValue($row, 'sellerSku')
-                        ) ?: 'LAZADA-' . uniqid(),
-
-                        'nama_produk' => $this->cleanString(
-                            $this->getColumnValue($row, 'itemName')
-                        ),
-
-                        'variasi' => $this->cleanString(
-                            $this->getColumnValue($row, 'variation')
-                        ),
-
-                        'quantity' => $quantity,
-                        'harga_satuan' => $hargaSatuan,
-                        'subtotal' => $quantity * $hargaSatuan,
-                    ];
-                }
-
-                // ===== Transaction =====
-                $transactions[] = $this->buildTransaction([
-                    'order_id' => $this->cleanString($orderNumber),
-
-                    'tanggal_order' => $this->parseDate(
-                        $this->getColumnValue($firstRow, 'createTime')
-                    ),
-
-                    'status_order' => $this->mapStatus(
-                        $this->getColumnValue($firstRow, 'status')
-                    ),
-
-                    'total_pesanan' => $totalPesanan,
-                    'total_diskon' => $voucher,
-                    'ongkos_kirim' => $ongkosKirim,
-                    'biaya_komisi' => $biayaKomisi,
-                    'pendapatan_bersih' => $pendapatanBersih,
-
-                    'nama_customer' => $this->cleanString(
-                        $this->getColumnValue($firstRow, 'customerName')
-                    ),
-
-                    'items' => $items,
-                ]);
-
-            } catch (\Exception $e) {
-                $errors[] = "Error parsing order {$orderNumber}: {$e->getMessage()}";
-            }
-        }
-
+        $pendapatanBersih = $totalPesanan - $biayaKomisi - $voucher;
+        
         return [
-            'transactions' => $transactions,
-            'summary' => [
-                'total_orders' => count($transactions),
-                'total_rows' => $rows->count(),
-                'errors' => $errors,
-            ],
+            'total_pesanan' => $totalPesanan,
+            'total_diskon' => $voucher,
+            'ongkos_kirim' => $ongkosKirim,
+            'biaya_komisi' => $biayaKomisi,
+            'pendapatan_bersih' => $pendapatanBersih,
         ];
     }
-
+    
     /**
-     * Get column value by header name
+     * Override parseItem untuk custom logic Lazada
      */
-    private function getColumnValue($row, string $columnName)
+    protected function parseItem(array $row, ColumnMapperInterface $columnMapper): ?array
     {
-        $index = array_search($columnName, $this->header, true);
+        $quantity = $this->parseInt(
+            $this->getColumnValue($row, 'quantity')
+        );
 
-        if ($index === false) {
-            return null;
-        }
+        $hargaSatuan = $this->parseDecimal(
+            $this->getColumnValue($row, 'unitPrice')
+        );
 
-        return $row[$index] ?? null;
+        return [
+            'sku' => $this->cleanString(
+                $this->getColumnValue($row, 'sellerSku')
+            ) ?: 'LAZADA-' . uniqid(),
+
+            'nama_produk' => $this->cleanString(
+                $this->getColumnValue($row, 'itemName')
+            ),
+
+            'variasi' => $this->cleanString(
+                $this->getColumnValue($row, 'variation')
+            ),
+
+            'quantity' => $quantity,
+            'harga_satuan' => $hargaSatuan,
+            'subtotal' => $quantity * $hargaSatuan,
+        ];
     }
 }

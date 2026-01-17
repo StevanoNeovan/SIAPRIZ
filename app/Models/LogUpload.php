@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class LogUpload extends Model
 {
@@ -18,6 +19,7 @@ class LogUpload extends Model
         'id_marketplace',
         'id_pengguna',
         'nama_file',
+        'file_path', // NEW: Store file path
         'ukuran_file',
         'total_baris',
         'baris_sukses',
@@ -52,6 +54,21 @@ class LogUpload extends Model
     public function transaksi()
     {
         return $this->hasMany(PenjualanTransaksi::class, 'id_batch_upload', 'id_upload');
+    }
+    
+    // Helper: Get file URL
+    public function getFileUrlAttribute()
+    {
+        if ($this->file_path) {
+            return Storage::url($this->file_path);
+        }
+        return null;
+    }
+    
+    // Helper: Check if file exists
+    public function hasFile(): bool
+    {
+        return $this->file_path && Storage::disk('public')->exists($this->file_path);
     }
     
     // Scopes
