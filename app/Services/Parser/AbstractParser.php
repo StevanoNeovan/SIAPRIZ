@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\Parser\Contracts\ColumnMapperInterface;
 use App\Services\Parser\Contracts\StatusMapperInterface;
+use App\Services\Parser\Validators\OrderValidator;
+use App\Services\Parser\Exceptions\ParserException;
 
 abstract class AbstractParser
 {
@@ -52,6 +54,7 @@ abstract class AbstractParser
     {
         $data = $this->readFile();
         $transactions = [];
+        $skipped = [];
         $errors = [];
         
         // Store header
@@ -71,12 +74,67 @@ abstract class AbstractParser
         
         foreach ($groupedOrders as $orderId => $orderRows) {
             try {
+                // Clean order ID (remove tabs, extra spaces, etc)
+                $cleanOrderId = $this->cleanString($orderId);
+                
+                $firstRowRaw = $orderRows->first();
+                $firstRow = $firstRowRaw instanceof Collection ? $firstRowRaw->toArray() : $firstRowRaw;
+                
+                // Parse financial data untuk validation
+                $financialData = $this->parseOrderFinancialData($orderRows, $columnMapper);
+                
+                // Parse status
+                $statusColumn = $columnMapper->getStatusColumn();
+                $rawStatus = $this->cleanString($this->getColumnValue($firstRow, $statusColumn));
+                $statusOrder = $statusMapper->mapStatus($rawStatus);
+                
+                // Log untuk debugging
+                \Illuminate\Support\Facades\Log::debug('Order validation', [
+                    'order_id' => $cleanOrderId,
+                    'raw_status' => $rawStatus,
+                    'mapped_status' => $statusOrder,
+                    'total_pesanan' => $financialData['total_pesanan'],
+                    'rows' => $orderRows->count(),
+                ]);
+
+                
+                // Validate order sebelum diproses
+                OrderValidator::validate($cleanOrderId, [
+                    'order_id' => $cleanOrderId,
+                    'status_order' => $statusOrder,
+                    'total_pesanan' => $financialData['total_pesanan'],
+                ]);
+                
+                // Parse order jika valid
                 $transaction = $this->parseOrder($orderId, $orderRows, $columnMapper, $statusMapper);
                 if ($transaction) {
                     $transactions[] = $transaction;
                 }
+            } catch (ParserException $e) {
+                // Handle parser exceptions dengan kategori
+                if ($e->getErrorType() === 'skipped') {
+                    $skipped[] = $e->getUserMessage();
+                    \Illuminate\Support\Facades\Log::info('Order skipped', [
+                        'order_id' => $orderId,
+                        'reason' => $e->getMessage(),
+                    ]);
+                } else {
+                    $errors[] = $e->getUserMessage();
+                    \Illuminate\Support\Facades\Log::warning('Order validation error', [
+                        'order_id' => $orderId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             } catch (\Exception $e) {
-                $errors[] = "Error parsing order {$orderId}: " . $e->getMessage();
+                // Handle unexpected exceptions dengan generic message
+                $errors[] = "Pesanan {$orderId} gagal diproses. Silakan hubungi administrator.";
+                
+                // Log actual error untuk debugging
+                \Illuminate\Support\Facades\Log::error('Parser error', [
+                    'order_id' => $orderId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
             }
         }
         
@@ -85,6 +143,7 @@ abstract class AbstractParser
             'summary' => [
                 'total_orders' => count($transactions),
                 'total_rows' => $rows->count(),
+                'skipped' => $skipped,
                 'errors' => $errors,
             ]
         ];
@@ -108,13 +167,21 @@ abstract class AbstractParser
         
         // Check if header contains required columns
         $columnMapper = $this->getColumnMapper();
-        foreach ($columnMapper->getRequiredColumns() as $column) {
-            if (!in_array($column, $this->header)) {
-                return false;
+        $requiredColumns = $columnMapper->getRequiredColumns();
+        
+        // Check if at least 80% of required columns exist
+        $foundCount = 0;
+        foreach ($requiredColumns as $column) {
+            if (in_array($column, $this->header)) {
+                $foundCount++;
             }
         }
         
-        return true;
+        // Require at least 80% of columns to be present
+        $requiredPercentage = 0.8;
+        $minimumRequired = ceil(count($requiredColumns) * $requiredPercentage);
+        
+        return $foundCount >= $minimumRequired;
     }
     
     /**
@@ -141,7 +208,7 @@ abstract class AbstractParser
         $items = $this->parseItems($orderRows, $columnMapper);
         
         // Parse financial data
-        $financialData = $this->parseFinancialData($firstRow, $columnMapper);
+        $financialData = $this->parseOrderFinancialData($orderRows, $columnMapper);
         
         // Parse dates
         $tanggalOrder = $this->parseDateFromRow($firstRow, $columnMapper);
@@ -238,6 +305,22 @@ abstract class AbstractParser
             'pendapatan_bersih' => $this->parseDecimal($this->getColumnValue($row, $mapping['pendapatan_bersih'] ?? 'Pendapatan Bersih')),
         ];
     }
+
+    /**
+     * Parse financial data level order
+     * Default: ambil dari row pertama
+     */
+    protected function parseOrderFinancialData(\Illuminate\Support\Collection $orderRows, ColumnMapperInterface $columnMapper): array 
+    {
+        $firstRowRaw = $orderRows->first();
+        $firstRow = $firstRowRaw instanceof \Illuminate\Support\Collection
+            ? $firstRowRaw->toArray()
+            : $firstRowRaw;
+
+        return $this->parseFinancialData($firstRow, $columnMapper);
+    }
+
+    
     
     /**
      * Parse customer data dari row

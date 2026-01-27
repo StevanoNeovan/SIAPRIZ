@@ -20,13 +20,13 @@ class PenjualanTransaksi extends Model
     protected $fillable = [
         'id_perusahaan',
         'id_marketplace',
-        'order_id', // FIXED: not nomor_order
+        'order_id', 
         'tanggal_order',
         'status_order',
-        'total_pesanan', // FIXED: not total_harga
-        'total_diskon', // FIXED: not diskon
+        'total_pesanan', 
+        'total_diskon', 
         'ongkos_kirim',
-        'biaya_komisi', // FIXED: not biaya_admin
+        'biaya_komisi', 
         'pendapatan_bersih',
         'nama_customer',
         'kota_customer',

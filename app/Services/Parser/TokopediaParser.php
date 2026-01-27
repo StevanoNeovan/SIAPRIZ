@@ -38,9 +38,11 @@ class TokopediaParser extends AbstractParser
         $orderRefund = $this->parseDecimal($this->getColumnValue($row, 'Order Refund Amount'));
         
         // Shipping
+        $originalShippingFee = $this->parseDecimal($this->getColumnValue($row, 'Original Shipping Fee'));
         $shippingFeeAfterDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee After Discount'));
         $shippingFeePlatformDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee Platform Discount'));
         $shippingFeeSellerDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee Seller Discount'));
+        $shippingInsurance = $this->parseDecimal($this->getColumnValue($row, 'Shipping Insurance'));
         
         // Discount & Fees
         $platformDiscount = $this->parseDecimal($this->getColumnValue($row, 'SKU Platform Discount'));
@@ -51,10 +53,9 @@ class TokopediaParser extends AbstractParser
         $handlingFee = $this->parseDecimal($this->getColumnValue($row, 'Handling Fee'));
         
         // Calculate totals
-        $totalDiskon = $platformDiscount + $sellerDiscount + $paymentPlatformDiscount + 
-                       $shippingFeePlatformDiscount + $shippingFeeSellerDiscount;
+        $totalDiskon = $platformDiscount + $sellerDiscount + $paymentPlatformDiscount;
         
-        // Biaya komisi = handling fee + buyer service fee (yang jadi beban seller)
+        // Biaya komisi = ????
         $biayaKomisi = $handlingFee + $buyerServiceFee;
         
         // Total pesanan = order amount (yang dibayar customer)

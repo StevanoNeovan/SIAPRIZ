@@ -30,7 +30,7 @@ class ShopeeColumnMapper implements ColumnMapperInterface
             'nama_produk' => 'Nama Produk',
             'variasi' => 'Nama Variasi',
             'quantity' => 'Jumlah',
-            'harga_satuan' => 'Harga Setelah Diskon',
+            'harga_satuan' => 'Harga Awal',
             'total_pesanan' => 'Total Pembayaran',
             'total_diskon' => 'Total Diskon',
             'ongkos_kirim' => 'Ongkos Kirim Dibayar oleh Pembeli',

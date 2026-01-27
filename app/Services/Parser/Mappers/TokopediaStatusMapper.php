@@ -18,6 +18,7 @@ class TokopediaStatusMapper implements StatusMapperInterface
             'delivered' => 'selesai',
             'finished' => 'selesai',
             'completed' => 'selesai',
+            'dikirim' => 'selesai',
             'shipped' => 'proses',
             'processed' => 'proses',
             'on process' => 'proses',
@@ -25,8 +26,11 @@ class TokopediaStatusMapper implements StatusMapperInterface
             'awaiting pickup' => 'proses',
             'cancelled' => 'dibatalkan',
             'canceled' => 'dibatalkan',
+            'dibatalkan' => 'dibatalkan',
+            'batal' => 'dibatalkan',
             'returned' => 'dikembalikan',
             'refunded' => 'dikembalikan',
+            'dikembalikan' => 'dikembalikan',
         ];
         
         return $mapping[$status] ?? 'proses';

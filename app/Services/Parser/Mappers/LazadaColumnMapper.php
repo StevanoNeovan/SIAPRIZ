@@ -36,7 +36,9 @@ class LazadaColumnMapper implements ColumnMapperInterface
             'ongkos_kirim' => 'shippingFee',
             'biaya_komisi' => 'commission',
             'pendapatan_bersih' => 'pendapatanBersih',
-            'nama_customer' => 'customerName',
+            'nama_customer' => 'billingName',
+            'kota_customer' => 'billingAddr4',
+            'provinsi_customer' => 'billingAddr3',
         ];
     }
     

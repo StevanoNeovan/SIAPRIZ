@@ -61,7 +61,9 @@ class UploadService
                 'log_id' => $logUpload->id_upload,
                 'total_orders' => $result['success'],
                 'total_failed' => $result['failed'],
+                'total_skipped' => count($parseResult['summary']['skipped'] ?? []),
                 'errors' => $result['errors'],
+                'skipped' => $parseResult['summary']['skipped'] ?? [],
                 'summary' => $parseResult['summary'],
             ];
             
@@ -135,10 +137,17 @@ class UploadService
             foreach ($transactions as $transaction) {
                 try {
                     // Create transaction header
-                    $transaksi = PenjualanTransaksi::create(array_merge(
+                   $transaksi = PenjualanTransaksi::updateOrCreate(
+                    [
+                        'order_id' => $transaction['header']['order_id'],
+                        'id_marketplace' => $transaction['header']['id_marketplace'],
+                    ],
+                    array_merge(
                         $transaction['header'],
                         ['id_batch_upload' => $idBatchUpload]
-                    ));
+                    )
+                );
+
                     
                     // Create transaction details
                     foreach ($transaction['items'] as $item) {
@@ -169,7 +178,11 @@ class UploadService
                     
                 } catch (\Exception $e) {
                     $failed++;
-                    $errors[] = "Order {$transaction['header']['order_id']}: " . $e->getMessage();
+                    
+                    // Convert database error to user-friendly message
+                    $errorMessage = $this->convertErrorToUserMessage($e, $transaction['header']['order_id']);
+                    $errors[] = $errorMessage;
+                    
                     Log::error('Failed to save transaction', [
                         'order_id' => $transaction['header']['order_id'],
                         'error' => $e->getMessage(),
@@ -214,6 +227,27 @@ class UploadService
             'status_upload' => 'gagal',
             'pesan_error' => $errorMessage,
         ]);
+    }
+    
+    /**
+     * Convert database error to user-friendly message
+     */
+    private function convertErrorToUserMessage(\Exception $e, string $orderId): string
+    {
+        $message = $e->getMessage();
+        
+        // Check for common database constraint errors
+        if (strpos($message, 'Quantity harus lebih besar dari 0') !== false) {
+            return "Pesanan {$orderId}: Jumlah produk tidak valid (harus lebih dari 0)";
+        }
+        
+        if (strpos($message, 'SQLSTATE') !== false) {
+            // Generic database error - don't expose SQL details
+            return "Pesanan {$orderId}: Gagal diproses. Silakan hubungi administrator.";
+        }
+        
+        // For other errors, return generic message
+        return "Pesanan {$orderId}: Gagal diproses. Silakan hubungi administrator.";
     }
     
     /**

@@ -19,6 +19,7 @@ class LazadaStatusMapper implements StatusMapperInterface
             'delivered' => 'selesai',
             'selesai' => 'selesai',
             'success' => 'selesai',
+            'ready_to_ship' => 'selesai',
             'pending' => 'proses',
             'processing' => 'proses',
             'proses' => 'proses',
