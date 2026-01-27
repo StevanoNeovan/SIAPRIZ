@@ -26,26 +26,32 @@ class AuthenticatedSessionController extends Controller
     public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->only('username', 'password');
-        $credentials['is_aktif'] = true; // Only allow active users
+        $credentials['is_aktif'] = true; // hanya user aktif yang bisa login
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
+            $user = Auth::user();
+
             // Update last login timestamp
-            Auth::user()->update([
+            $user->update([
                 'login_terakhir' => now()
             ]);
 
-            // Cek apakah sudah ada profil usaha aktif
-            $profilAda = Perusahaan::where('is_aktif', true)->exists();
+            // Hanya Administrator yang wajib isi profil usaha
+            if ($user->isAdministrator()) {
 
-            if (!$profilAda) {
-                return redirect()->route('profil-usaha.create')
-                    ->with('success', 'Silakan lengkapi profil usaha terlebih dahulu.');
+                $profilAda = Perusahaan::where('is_aktif', true)->exists();
+
+                if (!$profilAda) {
+                    return redirect()->route('profil-usaha.create')
+                        ->with('success', 'Silakan lengkapi profil usaha terlebih dahulu.');
+                }
             }
 
+            // Role lain (CEO dll) atau profil sudah ada → dashboard
             return redirect()->intended(route('dashboard'))
-                ->with('success', 'Selamat datang, ' . Auth::user()->nama_lengkap);
+                ->with('success', 'Selamat datang, ' . $user->nama_lengkap);
         }
 
         return back()->withErrors([
