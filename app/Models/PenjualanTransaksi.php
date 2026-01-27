@@ -20,13 +20,13 @@ class PenjualanTransaksi extends Model
     protected $fillable = [
         'id_perusahaan',
         'id_marketplace',
-        'order_id', // FIXED: not nomor_order
+        'order_id', 
         'tanggal_order',
         'status_order',
-        'total_pesanan', // FIXED: not total_harga
-        'total_diskon', // FIXED: not diskon
+        'total_pesanan', 
+        'total_diskon', 
         'ongkos_kirim',
-        'biaya_komisi', // FIXED: not biaya_admin
+        'biaya_komisi', 
         'pendapatan_bersih',
         'nama_customer',
         'kota_customer',
@@ -57,4 +57,31 @@ class PenjualanTransaksi extends Model
     {
         return $this->hasMany(PenjualanTransaksiDetail::class, 'id_transaksi', 'id_transaksi');
     }
+
+    public function logUpload()
+    {
+        return $this->belongsTo(LogUpload::class, 'id_batch_upload', 'id_upload');
+    }
+
+     // Scopes
+    public function scopeSelesai($query)
+    {
+        return $query->where('status_order', 'selesai');
+    }
+    
+    public function scopeByPerusahaan($query, int $idPerusahaan)
+    {
+        return $query->where('id_perusahaan', $idPerusahaan);
+    }
+    
+    public function scopeByMarketplace($query, int $idMarketplace)
+    {
+        return $query->where('id_marketplace', $idMarketplace);
+    }
+    
+    public function scopePeriode($query, string $tanggalMulai, string $tanggalAkhir)
+    {
+        return $query->whereBetween('tanggal_order', [$tanggalMulai, $tanggalAkhir]);
+    }
+
 }
