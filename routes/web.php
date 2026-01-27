@@ -40,10 +40,18 @@ Route::middleware('auth')->group(function () {
             ->name('penjualan.upload.store');
         
         // Profil Usaha
-        Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'edit'])
+        Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'index'])
+            ->name('profil-usaha.index');
+        Route::get('/profil-usaha/create', [\App\Http\Controllers\ProfilUsahaController::class, 'create'])
+            ->name('profil-usaha.create');
+        Route::post('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'store'])
+            ->name('profil-usaha.store');
+        Route::get('/profil-usaha/edit', [\App\Http\Controllers\ProfilUsahaController::class, 'edit'])
             ->name('profil-usaha.edit');
-        Route::put('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'update'])
+        Route::post('/profil-usaha/update', [\App\Http\Controllers\ProfilUsahaController::class, 'update'])
             ->name('profil-usaha.update');
+        Route::post('/profil-usaha/remove-logo', [\App\Http\Controllers\ProfilUsahaController::class, 'removeLogo'])
+            ->name('profil-usaha.remove-logo');
     });
     
     // Infografis - accessible by both roles

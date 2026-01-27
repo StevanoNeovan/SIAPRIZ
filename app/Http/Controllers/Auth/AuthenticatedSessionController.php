@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\Perusahaan;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -34,6 +35,14 @@ class AuthenticatedSessionController extends Controller
             Auth::user()->update([
                 'login_terakhir' => now()
             ]);
+
+            // Cek apakah sudah ada profil usaha aktif
+            $profilAda = Perusahaan::where('is_aktif', true)->exists();
+
+            if (!$profilAda) {
+                return redirect()->route('profil-usaha.create')
+                    ->with('success', 'Silakan lengkapi profil usaha terlebih dahulu.');
+            }
 
             return redirect()->intended(route('dashboard'))
                 ->with('success', 'Selamat datang, ' . Auth::user()->nama_lengkap);
