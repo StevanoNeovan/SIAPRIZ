@@ -111,7 +111,6 @@
         <!-- Marketplace Performance Chart -->
         <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 1</span>
                 Performa Per Marketplace
             </h3>
             <div class="relative h-64">
@@ -124,7 +123,6 @@
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
-                <span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 1</span>
                 Detail Kinerja Per Marketplace
             </h3>
         </div>
@@ -166,7 +164,6 @@
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
-                <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 3</span>
                 Produk Terlaris - Total Semua Marketplace
             </h3>
         </div>
@@ -218,7 +215,6 @@
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
-                <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Requirement 2</span>
                 Kinerja Produk Per Marketplace
             </h3>
             <p class="text-sm text-gray-600 mt-1">Detail penjualan produk di setiap marketplace</p>
