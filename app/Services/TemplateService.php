@@ -8,6 +8,10 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
+/**
+ * UPDATED: Template Excel yang disederhanakan
+ * Hapus kolom: Biaya Komisi, Pendapatan Bersih
+ */
 class TemplateService
 {
     /**
@@ -18,7 +22,7 @@ class TemplateService
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         
-        // Define columns
+        // Define columns - UPDATED: Hapus Biaya Komisi & Pendapatan Bersih
         $columns = [
             'A' => 'No. Pesanan',
             'B' => 'Tanggal Order',
@@ -31,11 +35,9 @@ class TemplateService
             'I' => 'Total Pesanan',
             'J' => 'Total Diskon',
             'K' => 'Ongkos Kirim',
-            'L' => 'Biaya Komisi',
-            'M' => 'Pendapatan Bersih',
-            'N' => 'Nama Customer',
-            'O' => 'Kota',
-            'P' => 'Provinsi',
+            'L' => 'Nama Customer',
+            'M' => 'Kota',
+            'N' => 'Provinsi',
         ];
         
         // Set header
@@ -61,11 +63,9 @@ class TemplateService
         $sheet->setCellValue('I2', 300000);
         $sheet->setCellValue('J2', 30000);
         $sheet->setCellValue('K2', 15000);
-        $sheet->setCellValue('L2', 10000);
-        $sheet->setCellValue('M2', 260000);
-        $sheet->setCellValue('N2', 'John Doe');
-        $sheet->setCellValue('O2', 'Surabaya');
-        $sheet->setCellValue('P2', 'Jawa Timur');
+        $sheet->setCellValue('L2', 'John Doe');
+        $sheet->setCellValue('M2', 'Surabaya');
+        $sheet->setCellValue('N2', 'Jawa Timur');
         
         // Add second product in same order
         $sheet->setCellValue('A3', 'ORDER-001');
@@ -82,11 +82,9 @@ class TemplateService
         $sheet->setCellValue('L3', '');
         $sheet->setCellValue('M3', '');
         $sheet->setCellValue('N3', '');
-        $sheet->setCellValue('O3', '');
-        $sheet->setCellValue('P3', '');
         
         // Style example rows
-        $sheet->getStyle('A2:P3')->applyFromArray([
+        $sheet->getStyle('A2:N3')->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
         ]);
         
@@ -106,6 +104,7 @@ class TemplateService
             '   - Nama Produk: Nama produk',
             '   - Jumlah: Quantity produk',
             '   - Harga Satuan: Harga per item',
+            '   - Total Pesanan: Total pembayaran customer (pendapatan kotor)',
             '',
             '2. UNTUK ORDER DENGAN BANYAK PRODUK:',
             '   - Tulis No. Pesanan yang sama di baris berikutnya',
@@ -120,9 +119,16 @@ class TemplateService
             '',
             '4. KOLOM OPSIONAL:',
             '   - Variasi: Varian produk (boleh kosong)',
+            '   - Total Diskon: Boleh kosong (default 0)',
+            '   - Ongkos Kirim: Boleh kosong (default 0)',
             '   - Nama Customer, Kota, Provinsi: Boleh kosong',
             '',
-            '5. SETELAH SELESAI MENGISI:',
+            '5. CATATAN PENTING:',
+            '   - Total Pesanan = Pendapatan Kotor (yang dibayar customer)',
+            '   - Biaya komisi marketplace TIDAK perlu diisi',
+            '   - Sistem akan menghitung pendapatan berdasarkan Total Pesanan',
+            '',
+            '6. SETELAH SELESAI MENGISI:',
             '   - Hapus baris contoh (baris 2 & 3)',
             '   - Hapus sheet Instruksi ini',
             '   - Upload file Excel',

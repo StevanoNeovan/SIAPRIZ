@@ -207,7 +207,7 @@ abstract class AbstractParser
         // Parse items
         $items = $this->parseItems($orderRows, $columnMapper);
         
-        // Parse financial data
+        // Parse financial data - UPDATED: hanya ambil total_pesanan
         $financialData = $this->parseOrderFinancialData($orderRows, $columnMapper);
         
         // Parse dates
@@ -227,10 +227,10 @@ abstract class AbstractParser
             'tanggal_order' => $tanggalOrder,
             'status_order' => $statusOrder,
             'total_pesanan' => $financialData['total_pesanan'],
-            'total_diskon' => $financialData['total_diskon'],
-            'ongkos_kirim' => $financialData['ongkos_kirim'],
-            'biaya_komisi' => $financialData['biaya_komisi'],
-            'pendapatan_bersih' => $financialData['pendapatan_bersih'],
+            'total_diskon' => $financialData['total_diskon'] ?? 0,
+            'ongkos_kirim' => $financialData['ongkos_kirim'] ?? 0,
+            'biaya_komisi' => 0, // Set to 0 - diabaikan
+            'pendapatan_bersih' => $financialData['total_pesanan'], // Sama dengan total_pesanan
             'nama_customer' => $customerData['nama_customer'],
             'kota_customer' => $customerData['kota_customer'],
             'provinsi_customer' => $customerData['provinsi_customer'],
@@ -287,7 +287,8 @@ abstract class AbstractParser
     
     /**
      * Parse financial data dari row
-     * Override di subclass untuk custom logic
+     * UPDATED: Sederhanakan - hanya ambil total_pesanan, diskon, ongkir
+     * Abaikan biaya_komisi dan pendapatan_bersih
      * 
      * @param array $row
      * @param ColumnMapperInterface $columnMapper
@@ -297,18 +298,20 @@ abstract class AbstractParser
     {
         $mapping = $columnMapper->getColumnMapping();
         
+        $totalPesanan = $this->parseDecimal($this->getColumnValue($row, $mapping['total_pesanan'] ?? 'Total Pesanan'));
+        
         return [
-            'total_pesanan' => $this->parseDecimal($this->getColumnValue($row, $mapping['total_pesanan'] ?? 'Total Pesanan')),
+            'total_pesanan' => $totalPesanan,
             'total_diskon' => $this->parseDecimal($this->getColumnValue($row, $mapping['total_diskon'] ?? 'Total Diskon')),
             'ongkos_kirim' => $this->parseDecimal($this->getColumnValue($row, $mapping['ongkos_kirim'] ?? 'Ongkos Kirim')),
-            'biaya_komisi' => $this->parseDecimal($this->getColumnValue($row, $mapping['biaya_komisi'] ?? 'Biaya Komisi')),
-            'pendapatan_bersih' => $this->parseDecimal($this->getColumnValue($row, $mapping['pendapatan_bersih'] ?? 'Pendapatan Bersih')),
+            // biaya_komisi dan pendapatan_bersih diabaikan
         ];
     }
 
     /**
      * Parse financial data level order
      * Default: ambil dari row pertama
+     * UPDATED: hanya ambil total_pesanan
      */
     protected function parseOrderFinancialData(\Illuminate\Support\Collection $orderRows, ColumnMapperInterface $columnMapper): array 
     {
@@ -472,6 +475,7 @@ abstract class AbstractParser
     
     /**
      * Generate unique transaction structure
+     * UPDATED: biaya_komisi = 0, pendapatan_bersih = total_pesanan
      * 
      * @param array $data
      * @return array
@@ -488,8 +492,8 @@ abstract class AbstractParser
                 'total_pesanan' => $data['total_pesanan'],
                 'total_diskon' => $data['total_diskon'] ?? 0,
                 'ongkos_kirim' => $data['ongkos_kirim'] ?? 0,
-                'biaya_komisi' => $data['biaya_komisi'] ?? 0,
-                'pendapatan_bersih' => $data['pendapatan_bersih'],
+                'biaya_komisi' => 0, // Diabaikan
+                'pendapatan_bersih' => $data['total_pesanan'], // Sama dengan total_pesanan
                 'nama_customer' => $data['nama_customer'] ?? null,
                 'kota_customer' => $data['kota_customer'] ?? null,
                 'provinsi_customer' => $data['provinsi_customer'] ?? null,

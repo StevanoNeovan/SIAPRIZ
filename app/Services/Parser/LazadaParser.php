@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Lazada Parser - untuk format CSV asli Lazada
+ * UPDATED: Hanya ambil paidPrice sebagai total_pesanan
  */
 class LazadaParser extends AbstractParser
 {
@@ -30,53 +31,45 @@ class LazadaParser extends AbstractParser
     }
     
     /**
-     * Override parseFinancialData untuk custom logic Lazada
+     * Override parseOrderFinancialData untuk Lazada
+     * UPDATED: Aggregate paidPrice dari semua rows untuk total_pesanan
      */
+    protected function parseOrderFinancialData(
+        Collection $orderRows,
+        ColumnMapperInterface $columnMapper
+    ): array {
+        $mapping = $columnMapper->getColumnMapping();
 
-protected function parseOrderFinancialData(
-    Collection $orderRows,
-    ColumnMapperInterface $columnMapper
-): array {
-    $mapping = $columnMapper->getColumnMapping();
+        $totalPesanan = 0;
+        $totalDiskon = 0;
+        $ongkosKirim = 0;
 
-    $totalPesanan = 0;
-    $totalDiskon = 0;
-    $ongkosKirim = 0;
-    $biayaKomisi = 0;
+        foreach ($orderRows as $row) {
+            $row = $row instanceof Collection ? $row->toArray() : $row;
 
-    foreach ($orderRows as $row) {
-        $row = $row instanceof Collection ? $row->toArray() : $row;
+            // Aggregate paidPrice
+            $totalPesanan += $this->parseDecimal(
+                $this->getColumnValue($row, $mapping['total_pesanan'])
+            );
 
-        $totalPesanan += $this->parseDecimal(
-            $this->getColumnValue($row, $mapping['total_pesanan'])
+            // Aggregate discount
+            $totalDiskon += $this->parseDecimal(
+                $this->getColumnValue($row, $mapping['total_diskon'])
+            );
+        }
+
+        // Ongkir dari row pertama
+        $firstRow = $orderRows->first()->toArray();
+        $ongkosKirim = $this->parseDecimal(
+            $this->getColumnValue($firstRow, $mapping['ongkos_kirim'])
         );
 
-        $totalDiskon += $this->parseDecimal(
-            $this->getColumnValue($row, $mapping['total_diskon'])
-        );
-
-        $biayaKomisi += $this->parseDecimal(
-            $this->getColumnValue($row, $mapping['biaya_komisi'])
-        );
+        return [
+            'total_pesanan' => $totalPesanan,  // Total dari semua items
+            'total_diskon' => $totalDiskon,
+            'ongkos_kirim' => $ongkosKirim,
+        ];
     }
-
-    // Ongkir 
-    $firstRow = $orderRows->first()->toArray();
-    $ongkosKirim = $this->parseDecimal(
-        $this->getColumnValue($firstRow, $mapping['ongkos_kirim'])
-    );
-
-    $pendapatanBersih = $totalPesanan - $totalDiskon - $biayaKomisi;
-
-    return [
-        'total_pesanan' => $totalPesanan,
-        'total_diskon' => $totalDiskon,
-        'ongkos_kirim' => $ongkosKirim,
-        'biaya_komisi' => $biayaKomisi,
-        'pendapatan_bersih' => $pendapatanBersih,
-    ];
-}
-
     
     /**
      * Override parseItem untuk custom logic Lazada

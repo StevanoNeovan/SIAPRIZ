@@ -7,6 +7,7 @@ use App\Services\Parser\Contracts\ColumnMapperInterface;
 
 /**
  * Column mapper untuk format CSV Shopee asli
+ * UPDATED: Hapus biaya_komisi dan pendapatan_bersih
  */
 class ShopeeColumnMapper implements ColumnMapperInterface
 {
@@ -34,8 +35,6 @@ class ShopeeColumnMapper implements ColumnMapperInterface
             'total_pesanan' => 'Total Pembayaran',
             'total_diskon' => 'Total Diskon',
             'ongkos_kirim' => 'Ongkos Kirim Dibayar oleh Pembeli',
-            'biaya_komisi' => 'Estimasi Potongan Biaya Pengiriman',
-            'pendapatan_bersih' => 'Pendapatan Bersih',
             'nama_customer' => 'Nama Penerima',
             'kota_customer' => 'Kota/Kabupaten',
             'provinsi_customer' => 'Provinsi',

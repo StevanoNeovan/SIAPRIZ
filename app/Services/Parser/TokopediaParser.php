@@ -10,6 +10,7 @@ use App\Services\Parser\Mappers\TokopediaStatusMapper;
 
 /**
  * Tokopedia Parser - untuk format CSV asli Tokopedia
+ * UPDATED: Hanya ambil Order Amount sebagai total_pesanan
  */
 class TokopediaParser extends AbstractParser
 {
@@ -30,49 +31,27 @@ class TokopediaParser extends AbstractParser
     
     /**
      * Override parseFinancialData untuk custom logic Tokopedia
+     * UPDATED: Hanya ambil Order Amount sebagai total_pesanan
      */
     protected function parseFinancialData(array $row, ColumnMapperInterface $columnMapper): array
     {
-        // Parse financial data
+        // Order Amount = yang dibayar customer (pendapatan kotor)
         $orderAmount = $this->parseDecimal($this->getColumnValue($row, 'Order Amount'));
-        $orderRefund = $this->parseDecimal($this->getColumnValue($row, 'Order Refund Amount'));
         
         // Shipping
-        $originalShippingFee = $this->parseDecimal($this->getColumnValue($row, 'Original Shipping Fee'));
         $shippingFeeAfterDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee After Discount'));
-        $shippingFeePlatformDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee Platform Discount'));
-        $shippingFeeSellerDiscount = $this->parseDecimal($this->getColumnValue($row, 'Shipping Fee Seller Discount'));
-        $shippingInsurance = $this->parseDecimal($this->getColumnValue($row, 'Shipping Insurance'));
         
-        // Discount & Fees
+        // Discount (untuk informasi)
         $platformDiscount = $this->parseDecimal($this->getColumnValue($row, 'SKU Platform Discount'));
         $sellerDiscount = $this->parseDecimal($this->getColumnValue($row, 'SKU Seller Discount'));
         $paymentPlatformDiscount = $this->parseDecimal($this->getColumnValue($row, 'Payment platform discount'));
         
-        $buyerServiceFee = $this->parseDecimal($this->getColumnValue($row, 'Buyer Service Fee'));
-        $handlingFee = $this->parseDecimal($this->getColumnValue($row, 'Handling Fee'));
-        
-        // Calculate totals
         $totalDiskon = $platformDiscount + $sellerDiscount + $paymentPlatformDiscount;
         
-        // Biaya komisi = ????
-        $biayaKomisi = $handlingFee + $buyerServiceFee;
-        
-        // Total pesanan = order amount (yang dibayar customer)
-        $totalPesanan = $orderAmount;
-        
-        // Ongkir yang dibayar customer
-        $ongkosKirim = $shippingFeeAfterDiscount;
-        
-        // Pendapatan bersih = order amount - biaya komisi - refund
-        $pendapatanBersih = $orderAmount - $biayaKomisi - $orderRefund;
-        
         return [
-            'total_pesanan' => $totalPesanan,
+            'total_pesanan' => $orderAmount,  // Pendapatan kotor
             'total_diskon' => $totalDiskon,
-            'ongkos_kirim' => $ongkosKirim,
-            'biaya_komisi' => $biayaKomisi,
-            'pendapatan_bersih' => $pendapatanBersih,
+            'ongkos_kirim' => $shippingFeeAfterDiscount,
         ];
     }
     

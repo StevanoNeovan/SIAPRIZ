@@ -7,7 +7,7 @@ use App\Services\Parser\Contracts\ColumnMapperInterface;
 
 /**
  * Column mapper untuk template SIAPRIZ universal
- * Semua marketplace menggunakan template yang sama
+ * UPDATED: Hapus kolom biaya_komisi dan pendapatan_bersih
  */
 class GenericColumnMapper implements ColumnMapperInterface
 {
@@ -23,10 +23,6 @@ class GenericColumnMapper implements ColumnMapperInterface
             'Jumlah',
             'Harga Satuan',
             'Total Pesanan',
-            'Total Diskon',
-            'Ongkos Kirim',
-            'Biaya Komisi',
-            'Pendapatan Bersih',
             'Nama Customer',
             'Kota',
             'Provinsi',
@@ -47,8 +43,7 @@ class GenericColumnMapper implements ColumnMapperInterface
             'total_pesanan' => 'Total Pesanan',
             'total_diskon' => 'Total Diskon',
             'ongkos_kirim' => 'Ongkos Kirim',
-            'biaya_komisi' => 'Biaya Komisi',
-            'pendapatan_bersih' => 'Pendapatan Bersih',
+            // Hapus: biaya_komisi dan pendapatan_bersih
             'nama_customer' => 'Nama Customer',
             'kota_customer' => 'Kota',
             'provinsi_customer' => 'Provinsi',
