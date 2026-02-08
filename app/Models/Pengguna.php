@@ -3,11 +3,13 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\VerifyEmail;
 
-class Pengguna extends Authenticatable
+class Pengguna extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -28,6 +30,8 @@ class Pengguna extends Authenticatable
         'login_terakhir',
     ];
 
+    protected $dates = ['email_verified_at'];
+
     protected $hidden = [
         'password',
     ];
@@ -35,6 +39,7 @@ class Pengguna extends Authenticatable
     protected $casts = [
         'is_aktif' => 'boolean',
         'login_terakhir' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     // Relationships
@@ -68,5 +73,15 @@ class Pengguna extends Authenticatable
     public function getAuthPassword()
     {
         return $this->password;
+    }
+
+    /**
+     * Send the email verification notification.
+     * 
+     * Override method ini untuk menggunakan custom email template
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new VerifyEmail);
     }
 }

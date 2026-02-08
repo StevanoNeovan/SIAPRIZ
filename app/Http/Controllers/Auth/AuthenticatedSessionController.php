@@ -25,7 +25,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function login(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->only('username', 'password');
+        $credentials = $request->only('email', 'password');
         $credentials['is_aktif'] = true; // hanya user aktif yang bisa login
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
@@ -55,7 +55,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         return back()->withErrors([
-            'username' => 'Username atau password salah.',
+            'username' => 'Email atau password salah.',
         ])->onlyInput('username');
     }
 

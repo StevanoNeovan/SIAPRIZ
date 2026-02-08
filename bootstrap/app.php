@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register route middleware aliases
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'verified.admin' => \App\Http\Middleware\VerifiedAdminOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

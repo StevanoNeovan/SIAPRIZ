@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Perusahaan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProfilUsahaController extends Controller
 {
@@ -14,7 +15,7 @@ class ProfilUsahaController extends Controller
     public function index()
     {
         // Ambil profil perusahaan pertama (asumsi single company)
-        $profil = Perusahaan::where('is_aktif', true)->first();
+        $profil = Auth::user()->perusahaan;
 
         return view('profil-usaha.index', compact('profil'));
     }
@@ -23,17 +24,17 @@ class ProfilUsahaController extends Controller
      * Show the form for creating a new profil usaha
      */
     public function create()
-    {
-        // Cek apakah sudah ada profil aktif
-        $existingProfil = Perusahaan::where('is_aktif', true)->first();
-        
-        if ($existingProfil) {
-            return redirect()->route('profil-usaha.index')
-                ->with('error', 'Profil usaha sudah ada. Silakan edit profil yang ada.');
-        }
+{
+    $profil = Auth::user()->perusahaan;
 
-        return view('profil-usaha.create');
+    if ($profil) {
+        return redirect()->route('profil-usaha.index')
+            ->with('error', 'Profil usaha sudah ada. Silakan edit.');
     }
+
+    return view('profil-usaha.create');
+}
+
 
     /**
      * Store a newly created profil usaha in storage
@@ -61,6 +62,7 @@ class ProfilUsahaController extends Controller
 
         // Create profil perusahaan
         Perusahaan::create([
+            'id_perusahaan' => Auth::user()->id_perusahaan,
             'nama_perusahaan' => $validated['nama_perusahaan'],
             'bidang_usaha' => $validated['bidang_usaha'],
             'logo_url' => $logoUrl,
@@ -76,7 +78,7 @@ class ProfilUsahaController extends Controller
      */
     public function edit()
     {
-        $profil = Perusahaan::where('is_aktif', true)->first();
+        $profil = Auth::user()->perusahaan;
 
         if (!$profil) {
             return redirect()->route('profil-usaha.create')
@@ -91,7 +93,7 @@ class ProfilUsahaController extends Controller
      */
     public function update(Request $request)
     {
-        $profil = Perusahaan::where('is_aktif', true)->first();
+        $profil = Auth::user()->perusahaan;
 
         if (!$profil) {
             return redirect()->route('profil-usaha.create')
@@ -135,7 +137,7 @@ class ProfilUsahaController extends Controller
      */
     public function removeLogo()
     {
-        $profil = Perusahaan::where('is_aktif', true)->first();
+        $profil = Auth::user()->perusahaan;
 
         if (!$profil) {
             return redirect()->route('profil-usaha.index')
