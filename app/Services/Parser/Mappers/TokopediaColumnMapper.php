@@ -7,6 +7,7 @@ use App\Services\Parser\Contracts\ColumnMapperInterface;
 
 /**
  * Column mapper untuk format CSV Tokopedia asli
+ * UPDATED: Hapus biaya_komisi dan pendapatan_bersih
  */
 class TokopediaColumnMapper implements ColumnMapperInterface
 {
@@ -34,8 +35,6 @@ class TokopediaColumnMapper implements ColumnMapperInterface
             'total_pesanan' => 'Order Amount',
             'total_diskon' => 'SKU Platform Discount',
             'ongkos_kirim' => 'Shipping Fee After Discount',
-            'biaya_komisi' => 'Handling Fee',
-            'pendapatan_bersih' => 'Pendapatan Bersih',
             'nama_customer' => 'Recipient',
             'kota_customer' => 'Regency and City',
             'provinsi_customer' => 'Province',

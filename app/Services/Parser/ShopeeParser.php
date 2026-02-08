@@ -11,6 +11,7 @@ use App\Services\Parser\Mappers\ShopeeStatusMapper;
 
 /**
  * Shopee Parser - untuk format CSV asli Shopee
+ * UPDATED: Hanya ambil total_pesanan (Total Pembayaran), abaikan komisi
  */
 class ShopeeParser extends AbstractParser
 {
@@ -31,15 +32,17 @@ class ShopeeParser extends AbstractParser
     
     /**
      * Override parseFinancialData untuk custom logic Shopee
+     * UPDATED: Hanya ambil Total Pembayaran sebagai total_pesanan
      */
     protected function parseFinancialData(array $row, ColumnMapperInterface $columnMapper): array
     {
-        // Parse financial data (dari baris pertama order)
+        // Total pembayaran = yang dibayar customer (pendapatan kotor)
         $totalPembayaran = $this->parseDecimal($this->getColumnValue($row, 'Total Pembayaran'));
-        $ongkosKirim = $this->parseDecimal($this->getColumnValue($row, 'Ongkos Kirim Dibayar oleh Pembeli'));
-        $estimasiPotonganOngkir = $this->parseDecimal($this->getColumnValue($row, 'Estimasi Potongan Biaya Pengiriman'));
         
-        // Total diskon = semua jenis diskon
+        // Ongkir yang dibayar customer
+        $ongkosKirim = $this->parseDecimal($this->getColumnValue($row, 'Ongkos Kirim Dibayar oleh Pembeli'));
+        
+        // Total diskon = semua jenis diskon (opsional, untuk informasi)
         $diskonPenjual = $this->parseDecimal($this->getColumnValue($row, 'Diskon Dari Penjual'));
         $diskonShopee = $this->parseDecimal($this->getColumnValue($row, 'Diskon Dari Shopee'));
         $voucherPenjual = $this->parseDecimal($this->getColumnValue($row, 'Voucher Ditanggung Penjual'));
@@ -49,21 +52,10 @@ class ShopeeParser extends AbstractParser
         
         $totalDiskon = $diskonPenjual + $diskonShopee + $voucherPenjual + $voucherShopee + $cashbackKoin + $potonganKoin;
         
-        // Biaya komisi = estimasi potongan ongkir (ini yang jadi beban seller)
-        $biayaKomisi = $estimasiPotonganOngkir;
-        
-        // Total pesanan = total pembayaran (yang dibayar customer)
-        $totalPesanan = $totalPembayaran;
-        
-        // Pendapatan bersih = total pembayaran - biaya komisi
-        $pendapatanBersih = $totalPembayaran - $biayaKomisi;
-        
         return [
-            'total_pesanan' => $totalPesanan,
+            'total_pesanan' => $totalPembayaran,  // Pendapatan kotor
             'total_diskon' => $totalDiskon,
             'ongkos_kirim' => $ongkosKirim,
-            'biaya_komisi' => $biayaKomisi,
-            'pendapatan_bersih' => $pendapatanBersih,
         ];
     }
     

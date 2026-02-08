@@ -7,6 +7,7 @@ use App\Services\Parser\Contracts\ColumnMapperInterface;
 
 /**
  * Column mapper untuk format CSV Lazada asli
+ * UPDATED: Hapus biaya_komisi dan pendapatan_bersih
  */
 class LazadaColumnMapper implements ColumnMapperInterface
 {
@@ -34,8 +35,6 @@ class LazadaColumnMapper implements ColumnMapperInterface
             'total_pesanan' => 'paidPrice',
             'total_diskon' => 'sellerDiscountTotal',
             'ongkos_kirim' => 'shippingFee',
-            'biaya_komisi' => 'commission',
-            'pendapatan_bersih' => 'pendapatanBersih',
             'nama_customer' => 'billingName',
             'kota_customer' => 'billingAddr4',
             'provinsi_customer' => 'billingAddr3',
