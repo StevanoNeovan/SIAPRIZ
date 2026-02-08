@@ -55,7 +55,7 @@ class DashboardService
     }
     
     /**
-     * Format summary data
+     * Format summary data - UPDATED: menggunakan total_pendapatan (pendapatan kotor)
      */
     private function formatSummary($summary): array
     {
@@ -70,14 +70,14 @@ class DashboardService
         
         return [
             'total_order' => $summary->total_order ?? 0,
-            'total_pendapatan' => number_format($summary->pendapatan_bersih ?? 0, 0, ',', '.'),
+            'total_pendapatan' => number_format($summary->total_pendapatan ?? 0, 0, ',', '.'),
             'total_item' => $summary->total_item_terjual ?? 0,
             'rata_rata_order' => number_format($summary->rata_rata_nilai_order ?? 0, 0, ',', '.'),
         ];
     }
     
     /**
-     * Format marketplace data
+     * Format marketplace data - UPDATED: hanya tampilkan pendapatan kotor, hilangkan komisi & margin
      */
     private function formatMarketplace(array $data): array
     {
@@ -87,10 +87,8 @@ class DashboardService
                 'total_order' => $item->total_order ?? 0,
                 'item_terjual' => $item->item_terjual ?? 0,
                 'pendapatan_kotor' => $item->pendapatan_kotor ?? 0,
-                'pendapatan_bersih' => $item->pendapatan_bersih ?? 0,
-                'pendapatan_formatted' => 'Rp ' . number_format($item->pendapatan_bersih ?? 0, 0, ',', '.'),
-                'komisi' => $item->komisi_dibayar ?? 0,
-                'margin' => number_format($item->profit_margin_persen ?? 0, 2)
+                'total_pendapatan' => $item->total_pendapatan ?? 0,
+                'pendapatan_formatted' => 'Rp ' . number_format($item->total_pendapatan ?? 0, 0, ',', '.'),
             ];
         }, $data);
     }
@@ -126,57 +124,55 @@ class DashboardService
      * Prepare data for sales trend line chart
      */
     private function prepareChartData(array $salesTrend): array
-        {
-            $labels = [];
-            $pendapatan = [];
-            $totalOrder = [];
+    {
+        $labels = [];
+        $pendapatan = [];
+        $totalOrder = [];
 
-            foreach ($salesTrend as $item) {
-                $labels[] = Carbon::parse($item->tanggal)->format('d M');
-                $pendapatan[] = $item->pendapatan ?? 0;
-                $totalOrder[] = $item->jumlah_order ?? 0; 
-            }
-
-            return [
-                'labels' => $labels,
-                'pendapatan' => $pendapatan,
-                'total_order' => $totalOrder
-            ];
+        foreach ($salesTrend as $item) {
+            $labels[] = Carbon::parse($item->tanggal)->format('d M');
+            $pendapatan[] = $item->pendapatan ?? 0;
+            $totalOrder[] = $item->jumlah_order ?? 0; 
         }
 
+        return [
+            'labels' => $labels,
+            'pendapatan' => $pendapatan,
+            'total_order' => $totalOrder
+        ];
+    }
     
     /**
-     * Prepare data for marketplace bar chart
+     * Prepare data for marketplace bar chart - UPDATED: gunakan pendapatan_kotor
      */
     private function prepareMarketplaceChartData(array $marketplace): array
-        {
-            $labels = [];
-            $pendapatan = [];
-            $totalOrder = [];
-            $colors = [];
+    {
+        $labels = [];
+        $pendapatan = [];
+        $totalOrder = [];
+        $colors = [];
 
-             $marketplaceColors = [
+        $marketplaceColors = [
             'Shopee'    => 'rgba(238, 77, 45, 0.85)',   
             'Tokopedia' => 'rgba(3, 172, 14, 0.85)',    
             'Lazada'    => 'rgba(65, 105, 225, 0.85)',  
             'Umum'      => 'rgba(107, 114, 128, 0.85)',
         ];
 
-            foreach ($marketplace as $item) {
-                $nama = $item->nama_marketplace ?? 'Unknown';
+        foreach ($marketplace as $item) {
+            $nama = $item->nama_marketplace ?? 'Unknown';
 
-                $labels[] = $nama;
-                $pendapatan[] = $item->pendapatan_kotor ?? 0;
-                $totalOrder[] = $item->total_order ?? 0;
-                $colors[] = $marketplaceColors[$nama] ?? '#9CA3AF';
-            }
-
-            return [
-                'labels' => $labels,
-                'pendapatan' => $pendapatan,
-                'total_order' => $totalOrder,
-                'colors' => $colors
-            ];
+            $labels[] = $nama;
+            $pendapatan[] = $item->pendapatan_kotor ?? 0;
+            $totalOrder[] = $item->total_order ?? 0;
+            $colors[] = $marketplaceColors[$nama] ?? '#9CA3AF';
         }
 
+        return [
+            'labels' => $labels,
+            'pendapatan' => $pendapatan,
+            'total_order' => $totalOrder,
+            'colors' => $colors
+        ];
+    }
 }

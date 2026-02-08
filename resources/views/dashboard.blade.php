@@ -134,9 +134,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Order</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Terjual</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan Kotor</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Komisi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan Bersih</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Margin (%)</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -145,14 +142,11 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $mp['nama'] }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($mp['total_order']) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($mp['item_terjual']) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($mp['pendapatan_kotor'], 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">Rp {{ number_format($mp['komisi'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{{ $mp['pendapatan_formatted'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $mp['margin'] }}%</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data marketplace</td>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data marketplace</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -278,13 +272,28 @@
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
                 tooltip: {
                     callbacks: {
                         label: (ctx) =>
                             'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
                         afterLabel: (ctx) =>
                             'Total Order: ' + salesData.total_order[ctx.dataIndex]
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rp ' + value.toLocaleString('id-ID');
+                        }
                     }
                 }
             }
@@ -296,14 +305,13 @@
        MARKETPLACE CHART
     ==========================*/
     const marketplaceData = @json($marketplace_chart_data);
-    
 
     new Chart(document.getElementById('marketplaceChart'), {
         type: 'bar',
         data: {
             labels: marketplaceData.labels,
             datasets: [{
-                label: 'Pendapatan Bersih',
+                label: 'Pendapatan Kotor',
                 data: marketplaceData.pendapatan,
                 backgroundColor: marketplaceData.colors,
                 borderRadius: 6
@@ -311,6 +319,7 @@
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 tooltip: {
                     callbacks: {
@@ -320,7 +329,10 @@
                             'Total Order: ' + marketplaceData.total_order[ctx.dataIndex]
                     }
                 },
-                legend: { display: false }
+                legend: { 
+                    display: true,
+                    position: 'top'
+                }
             },
             scales: {
                 y: {
