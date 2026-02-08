@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Repositories\Contracts\DashboardRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardRepository implements DashboardRepositoryInterface
 {
@@ -41,7 +42,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             
             return $results ?? [];
         } catch (\Exception $e) {
-            \Log::error('Error in getMarketplacePerformance: ' . $e->getMessage());
+            Log::error('Error in getMarketplacePerformance: ' . $e->getMessage());
             return [];
         }
     }
@@ -61,7 +62,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             
             return $results ?? [];
         } catch (\Exception $e) {
-            \Log::error('Error in getTopProducts: ' . $e->getMessage());
+            Log::error('Error in getTopProducts: ' . $e->getMessage());
             return [];
         }
     }
@@ -80,13 +81,14 @@ class DashboardRepository implements DashboardRepositoryInterface
             
             return $results ?? [];
         } catch (\Exception $e) {
-            \Log::error('Error in getProductPerformancePerMarketplace: ' . $e->getMessage());
+            Log::error('Error in getProductPerformancePerMarketplace: ' . $e->getMessage());
             return [];
         }
     }
     
     /**
      * Get sales trend for charts (daily aggregation)
+     * UPDATED: menggunakan total_pesanan bukan pendapatan_bersih
      */
     public function getSalesTrend(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): array
     {
@@ -94,7 +96,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             $results = DB::table('penjualan_transaksi')
                 ->select(
                     DB::raw('DATE(tanggal_order) as tanggal'),
-                    DB::raw('SUM(pendapatan_bersih) as pendapatan'),
+                    DB::raw('SUM(total_pesanan) as pendapatan'),
                     DB::raw('COUNT(DISTINCT id_transaksi) as jumlah_order')
                 )
                 ->where('id_perusahaan', $idPerusahaan)
@@ -107,7 +109,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             
             return $results;
         } catch (\Exception $e) {
-            \Log::error('Error in getSalesTrend: ' . $e->getMessage());
+            Log::error('Error in getSalesTrend: ' . $e->getMessage());
             return [];
         }
     }
