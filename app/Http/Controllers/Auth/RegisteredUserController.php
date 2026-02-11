@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -27,35 +28,64 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nama_perusahaan' => ['required', 'string', 'max:255'],
-            'bidang_usaha'    => 'required|string|max:255',
-            'email'           => ['required', 'email', 'max:255', 'unique:pengguna,email'],
-            'password'        => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        // ✅ Validasi dulu sebelum apapun
+        try {
+            $validated = $request->validate([
+                'nama_perusahaan' => ['required', 'string', 'max:255'],
+                'bidang_usaha'    => ['required', 'in:Jasa,Dagang,Manufaktur,Lainnya'],
+                'jenis_usaha'     => ['required', 'string', 'max:255'],
+                'username'        => ['required', 'string', 'max:255', 'unique:pengguna,username'],
+                'email'           => ['required', 'email', 'max:255', 'unique:pengguna,email'],
+                'password'        => ['required', 'confirmed', Rules\Password::defaults()],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Redirect kembali dengan error
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
+        }
 
-        // 1️⃣ Buat perusahaan
-        $perusahaan = Perusahaan::create([
-            'nama_perusahaan' => $request->nama_perusahaan,
-            'bidang_usaha'    => $request->bidang_usaha,
-        ]);
+        try {
+            // Gunakan database transaction untuk memastikan data konsisten
+            DB::beginTransaction();
 
-        // 2️⃣ Buat owner perusahaan (pengguna)
-        $pengguna = Pengguna::create([
-            'id_perusahaan' => $perusahaan->id_perusahaan,
-            'id_role'       => 1, // CEO / Owner (sesuaikan id role kamu)
-            'nama_lengkap'  => $request->username,
-            'username' => $request->username,
-            'email'         => $request->email,
-            'password'      => Hash::make($request->password),
-            'is_aktif'      => 0,
-        ]);
+            // 1️⃣ Buat perusahaan
+            $perusahaan = Perusahaan::create([
+                'nama_perusahaan' => $validated['nama_perusahaan'],
+                'bidang_usaha'    => $validated['bidang_usaha'],
+                'jenis_usaha'     => $validated['jenis_usaha'],
+            ]);
 
-        // 3️⃣ Kirim email verifikasi
-        event(new Registered($pengguna));
+            // 2️⃣ Buat owner perusahaan (pengguna)
+            $pengguna = Pengguna::create([
+                'id_perusahaan' => $perusahaan->id_perusahaan,
+                'id_role'       => 1,
+                'nama_lengkap'  => $validated['username'],
+                'username'      => $validated['username'],
+                'email'         => $validated['email'],
+                'password'      => Hash::make($validated['password']),
+                'is_aktif'      => 0,
+            ]);
 
-        session(['pending_verification_user' => $pengguna->id_pengguna]);
+            DB::commit();
 
-        return redirect()->route('verification.notice');
+            // 3️⃣ Kirim email verifikasi
+            event(new Registered($pengguna));
+
+            session(['pending_verification_user' => $pengguna->id_pengguna]);
+
+            return redirect()->route('verification.notice');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // Log error untuk debugging
+            \Log::error('Registration Error: ' . $e->getMessage());
+            
+            // Redirect dengan pesan error umum
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.']);
+        }
     }
 }

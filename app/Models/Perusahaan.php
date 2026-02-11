@@ -16,6 +16,7 @@ class Perusahaan extends Model
         'nama_perusahaan',
         'logo_url',
         'bidang_usaha',
+        'jenis_usaha',
         'is_aktif',
     ];
 
