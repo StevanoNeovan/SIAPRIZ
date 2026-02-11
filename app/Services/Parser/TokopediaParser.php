@@ -63,6 +63,8 @@ class TokopediaParser extends AbstractParser
         $quantity = $this->parseInt($this->getColumnValue($row, 'Quantity'));
         $skuUnitPrice = $this->parseDecimal($this->getColumnValue($row, 'SKU Unit Original Price'));
         $skuSubtotalAfterDiscount = $this->parseDecimal($this->getColumnValue($row, 'SKU Subtotal After Discount'));
+        $buyerServiceFee = $this->parseDecimal($this->getColumnValue($row, 'Buyer Service Fee'));
+        $handlingFee = $this->parseDecimal($this->getColumnValue($row, 'Handling Fee'));
         
         return [
             'sku' => $this->cleanString($this->getColumnValue($row, 'Seller SKU')) ?: 
@@ -72,7 +74,7 @@ class TokopediaParser extends AbstractParser
             'variasi' => $this->cleanString($this->getColumnValue($row, 'Variation')),
             'quantity' => $quantity,
             'harga_satuan' => $skuUnitPrice,
-            'subtotal' => $skuSubtotalAfterDiscount, // Subtotal setelah diskon
+            'subtotal' => $skuSubtotalAfterDiscount + $buyerServiceFee + $handlingFee, // Subtotal setelah diskon + biaya layanan
         ];
     }
 }

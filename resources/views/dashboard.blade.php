@@ -5,9 +5,9 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Filter Periode -->
+    <!-- Filter Periode & Download Button -->
     <div class="bg-white rounded-lg shadow p-6">
-        <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap gap-4 items-end">
+        <form method="GET" action="{{ route('dashboard') }}" id="filterForm" class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
                 <label for="tanggal_mulai" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
                 <input 
@@ -28,12 +28,22 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
             </div>
-            <div>
+            <div class="flex gap-2">
                 <button 
                     type="submit" 
                     class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                     Filter
+                </button>
+                <button 
+                    type="button"
+                    onclick="downloadReport()"
+                    class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download Laporan
                 </button>
             </div>
         </form>
@@ -167,10 +177,10 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ranking</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Produk</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Terjual</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaksi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -190,14 +200,21 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $product->nama_produk }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->kategori ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($product->total_terjual) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">Rp {{ number_format($product->total_pendapatan, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($product->jumlah_transaksi) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <button 
+                                    onclick="showProductDetail({{ $product->id_produk }}, '{{ $product->nama_produk }}')"
+                                    class="text-indigo-600 hover:text-indigo-900 font-medium"
+                                >
+                                    Detail
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data produk</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data produk</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -227,6 +244,7 @@
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Total Terjual</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Pendapatan</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Order</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -236,6 +254,14 @@
                                         <td class="px-4 py-2 text-sm text-gray-900">{{ number_format($product['total_terjual']) }}</td>
                                         <td class="px-4 py-2 text-sm text-green-600 font-medium">{{ $product['total_pendapatan_formatted'] }}</td>
                                         <td class="px-4 py-2 text-sm text-gray-500">{{ number_format($product['jumlah_order']) }}</td>
+                                        <td class="px-4 py-2 text-sm">
+                                            <button 
+                                                onclick="showProductDetail({{ $product['id_produk'] }}, '{{ $product['nama_produk'] }}')"
+                                                class="text-indigo-600 hover:text-indigo-900 font-medium"
+                                            >
+                                                Detail
+                                            </button>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -249,9 +275,58 @@
     </div>
 </div>
 
+<!-- Modal Detail Transaksi Produk -->
+<div id="productDetailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center pb-3 border-b">
+            <h3 class="text-lg font-semibold text-gray-900" id="modalProductName">Detail Transaksi Produk</h3>
+            <button onclick="closeProductDetail()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="mt-4">
+            <div id="modalLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p class="mt-2 text-gray-600">Memuat data...</p>
+            </div>
+            <div id="modalContent" class="hidden overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Customer</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alamat</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Variasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTableBody" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Chart.js Script -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+    /* =========================
+       DOWNLOAD REPORT
+    ==========================*/
+    function downloadReport() {
+        const tanggalMulai = document.getElementById('tanggal_mulai').value || '{{ $periode['mulai'] }}';
+        const tanggalAkhir = document.getElementById('tanggal_akhir').value || '{{ $periode['akhir'] }}';
+        
+        window.location.href = `/dashboard/download-report?tanggal_mulai=${tanggalMulai}&tanggal_akhir=${tanggalAkhir}`;
+    }
+
     /* =========================
        SALES TREND CHART
     ==========================*/
@@ -300,9 +375,8 @@
         }
     });
 
-
     /* =========================
-       MARKETPLACE CHART
+       MARKETPLACE CHART - FIXED
     ==========================*/
     const marketplaceData = @json($marketplace_chart_data);
 
@@ -319,7 +393,6 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
             plugins: {
                 tooltip: {
                     callbacks: {
@@ -329,10 +402,7 @@
                             'Total Order: ' + marketplaceData.total_order[ctx.dataIndex]
                     }
                 },
-                legend: { 
-                    display: true,
-                    position: 'top'
-                }
+                legend: { display: false }
             },
             scales: {
                 y: {
@@ -342,6 +412,79 @@
                     }
                 }
             }
+        }
+    });
+
+    /* =========================
+       PRODUCT DETAIL MODAL
+    ==========================*/
+    function showProductDetail(productId, productName) {
+        const modal = document.getElementById('productDetailModal');
+        const modalTitle = document.getElementById('modalProductName');
+        const loading = document.getElementById('modalLoading');
+        const content = document.getElementById('modalContent');
+        const tableBody = document.getElementById('modalTableBody');
+        
+        modal.classList.remove('hidden');
+        modalTitle.textContent = `Detail Transaksi: ${productName}`;
+        
+        loading.classList.remove('hidden');
+        content.classList.add('hidden');
+        
+        const tanggalMulai = document.getElementById('tanggal_mulai').value || '{{ $periode['mulai'] }}';
+        const tanggalAkhir = document.getElementById('tanggal_akhir').value || '{{ $periode['akhir'] }}';
+        
+        fetch(`/dashboard/product/${productId}/details?tanggal_mulai=${tanggalMulai}&tanggal_akhir=${tanggalAkhir}`)
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                
+                if (data.success && data.data.length > 0) {
+                    tableBody.innerHTML = data.data.map(tx => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.order_id}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.nama_customer}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.kota_customer}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${tx.tanggal_order}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.marketplace}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.quantity}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${tx.harga_satuan}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">${tx.subtotal}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${tx.variasi}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                Tidak ada transaksi ditemukan
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-red-500">
+                            Terjadi kesalahan saat memuat data
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    function closeProductDetail() {
+        document.getElementById('productDetailModal').classList.add('hidden');
+    }
+    
+    document.getElementById('productDetailModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeProductDetail();
         }
     });
 </script>

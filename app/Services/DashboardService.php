@@ -28,9 +28,9 @@ class DashboardService
         $summary = $this->dashboardRepo->getSummary($idPerusahaan, $tanggalMulai, $tanggalAkhir);
         
         $marketplace = $this->dashboardRepo->getMarketplacePerformance(
-            $idPerusahaan, 
-            Carbon::parse($tanggalMulai)->year, 
-            Carbon::parse($tanggalMulai)->month
+            $idPerusahaan,
+            $tanggalMulai,
+            $tanggalAkhir
         );
         
         $topProducts = $this->dashboardRepo->getTopProducts($idPerusahaan, $tanggalMulai, $tanggalAkhir, 10);
@@ -52,6 +52,38 @@ class DashboardService
                 'akhir' => $tanggalAkhir
             ]
         ];
+    }
+    
+    /**
+     * NEW: Get product transaction details
+     */
+    public function getProductDetails(int $idPerusahaan, int $idProduk, ?string $tanggalMulai = null, ?string $tanggalAkhir = null): array
+    {
+        // Set default dates if not provided (current month)
+        $tanggalMulai = $tanggalMulai ?? Carbon::now()->startOfMonth()->toDateString();
+        $tanggalAkhir = $tanggalAkhir ?? Carbon::now()->endOfMonth()->toDateString();
+        
+        $transactions = $this->dashboardRepo->getProductTransactionDetails(
+            $idPerusahaan,
+            $idProduk,
+            $tanggalMulai,
+            $tanggalAkhir
+        );
+        
+        return array_map(function($tx) {
+            return [
+                'order_id' => $tx->order_id,
+                'nama_customer' => $tx->nama_customer ?? '-',
+                'kota_customer'=> $tx->kota_customer ?? '-',
+                'tanggal_order' => Carbon::parse($tx->tanggal_order)->format('d M Y'),
+                'marketplace' => $tx->nama_marketplace,
+                'status' => $tx->status_order,
+                'quantity' => $tx->quantity,
+                'harga_satuan' => 'Rp ' . number_format($tx->harga_satuan, 0, ',', '.'),
+                'subtotal' => 'Rp ' . number_format($tx->subtotal, 0, ',', '.'),
+                'variasi' => $tx->variasi ?? '-',
+            ];
+        }, $transactions);
     }
     
     /**

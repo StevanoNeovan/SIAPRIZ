@@ -23,7 +23,7 @@ interface DashboardRepositoryInterface
      * @param int $bulan
      * @return array
      */
-    public function getMarketplacePerformance(int $idPerusahaan, int $tahun, int $bulan): array;
+    public function getMarketplacePerformance(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): array;
     
     /**
      * Get top selling products

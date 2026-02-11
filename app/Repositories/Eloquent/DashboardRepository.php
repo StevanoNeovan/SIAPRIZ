@@ -31,13 +31,13 @@ class DashboardRepository implements DashboardRepositoryInterface
     /**
      * Get marketplace performance comparison
      */
-    public function getMarketplacePerformance(int $idPerusahaan, int $tahun, int $bulan): array
+    public function getMarketplacePerformance(int $idPerusahaan, string $tanggalMulai, string $tanggalAkhir): array
     {
         try {
             $results = DB::select('CALL sp_perbandingan_marketplace(?, ?, ?)', [
                 $idPerusahaan,
-                $tahun,
-                $bulan
+                $tanggalMulai,
+                $tanggalAkhir
             ]);
             
             return $results ?? [];
@@ -110,6 +110,27 @@ class DashboardRepository implements DashboardRepositoryInterface
             return $results;
         } catch (\Exception $e) {
             Log::error('Error in getSalesTrend: ' . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * NEW: Get detail transaksi per produk
+     * Untuk ditampilkan di modal detail
+     */
+    public function getProductTransactionDetails(int $idPerusahaan, int $idProduk, string $tanggalMulai, string $tanggalAkhir): array
+    {
+        try {
+            $results = DB::select('CALL sp_detail_transaksi_produk(?, ?, ?, ?)', [
+                $idPerusahaan,
+                $idProduk,
+                $tanggalMulai,
+                $tanggalAkhir
+            ]);
+            
+            return $results ?? [];
+        } catch (\Exception $e) {
+            Log::error('Error in getProductTransactionDetails: ' . $e->getMessage());
             return [];
         }
     }

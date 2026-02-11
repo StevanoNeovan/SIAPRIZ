@@ -344,8 +344,9 @@ abstract class AbstractParser
         ];
     }
     
-    /**
+      /**
      * Parse date dari row dengan multiple date columns
+     * UPDATED: Better logging and tab cleaning
      * 
      * @param array $row
      * @param ColumnMapperInterface $columnMapper
@@ -357,16 +358,40 @@ abstract class AbstractParser
         
         foreach ($dateColumns as $column) {
             $value = $this->getColumnValue($row, $column);
-            if (!is_null($value) && $value !== '') {
-                $parsed = $this->parseDate($value);
-                if ($parsed !== now()->format('Y-m-d')) {
-                    return $parsed;
-                }
+            
+            // Clean value first
+            $cleanValue = $this->cleanString($value);
+            
+            // Skip empty values
+            if ($cleanValue === '' || $cleanValue === '-') {
+                continue;
+            }
+            
+            $parsed = $this->parseDate($cleanValue);
+            
+            // Log untuk debugging
+            \Illuminate\Support\Facades\Log::debug('Date column parsed', [
+                'column' => $column,
+                'raw_value' => $value,
+                'clean_value' => $cleanValue,
+                'parsed_value' => $parsed,
+            ]);
+            
+            // Return first successfully parsed date (not fallback to today)
+            $today = now()->format('Y-m-d');
+            if ($parsed !== $today) {
+                return $parsed;
             }
         }
         
+        // Fallback to current date
+        \Illuminate\Support\Facades\Log::warning('No valid date found in row, using current date', [
+            'date_columns' => $dateColumns,
+        ]);
+        
         return now()->format('Y-m-d');
     }
+
     
     /**
      * Read CSV/Excel file to collection
@@ -408,34 +433,178 @@ abstract class AbstractParser
      * @return string
      */
     protected function cleanString($value): string
-    {
-        if (is_null($value)) {
-            return '';
-        }
-        
-        return trim((string) $value);
+{
+    if (is_null($value)) {
+        return '';
     }
+    
+    $str = (string) $value;
+    
+    //Remove tabs, newlines, carriage returns
+    $str = str_replace(["\t", "\r", "\n"], '', $str);
+    
+    // Remove extra spaces
+    $str = preg_replace('/\s+/', ' ', $str);
+    
+    return trim($str);
+}
     
     /**
      * Parse decimal/currency value
+     * ENHANCED: Extensive logging untuk debug
      * 
      * @param mixed $value
      * @return float
      */
     protected function parseDecimal($value): float
     {
+        // Log original value
+        \Illuminate\Support\Facades\Log::debug('parseDecimal START', [
+            'original_value' => $value,
+            'type' => gettype($value),
+        ]);
+        
         if (is_null($value) || $value === '') {
+            \Illuminate\Support\Facades\Log::debug('parseDecimal: null or empty', ['result' => 0]);
             return 0;
         }
         
-        // Remove currency symbols and thousands separator
-        $cleaned = preg_replace('/[^\d,.-]/', '', (string) $value);
+        // Clean tabs, newlines, spaces first
+        $cleaned = $this->cleanString($value);
         
-        // Handle different decimal separators
-        $cleaned = str_replace(',', '.', $cleaned);
+        \Illuminate\Support\Facades\Log::debug('parseDecimal after cleanString', [
+            'cleaned' => $cleaned,
+        ]);
         
-        return (float) $cleaned;
+        if ($cleaned === '') {
+            \Illuminate\Support\Facades\Log::debug('parseDecimal: empty after clean', ['result' => 0]);
+            return 0;
+        }
+        
+        // Remove currency symbols (Rp, $, etc) and keep only digits, comma, dot, minus
+        $cleaned = preg_replace('/[^\d,.-]/', '', $cleaned);
+        
+        \Illuminate\Support\Facades\Log::debug('parseDecimal after remove currency', [
+            'cleaned' => $cleaned,
+        ]);
+        
+        // Count commas and dots
+        $commaCount = substr_count($cleaned, ',');
+        $dotCount = substr_count($cleaned, '.');
+        
+        \Illuminate\Support\Facades\Log::debug('parseDecimal separator analysis', [
+            'cleaned' => $cleaned,
+            'comma_count' => $commaCount,
+            'dot_count' => $dotCount,
+        ]);
+        
+        // Decision logic
+        if ($commaCount > 0 && $dotCount > 0) {
+            // Both comma and dot present
+            $lastComma = strrpos($cleaned, ',');
+            $lastDot = strrpos($cleaned, '.');
+            
+            \Illuminate\Support\Facades\Log::debug('parseDecimal: both separators', [
+                'last_comma_pos' => $lastComma,
+                'last_dot_pos' => $lastDot,
+            ]);
+            
+            if ($lastComma > $lastDot) {
+                // Comma is decimal separator (European format: 1.234,56)
+                $cleaned = str_replace('.', '', $cleaned); // Remove thousands
+                $cleaned = str_replace(',', '.', $cleaned); // Comma to dot
+                
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: European format', [
+                    'cleaned' => $cleaned,
+                ]);
+            } else {
+                // Dot is decimal separator (US format: 1,234.56)
+                $cleaned = str_replace(',', '', $cleaned); // Remove thousands
+                
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: US format', [
+                    'cleaned' => $cleaned,
+                ]);
+            }
+        } elseif ($dotCount > 1) {
+            // Multiple dots = thousands separator (e.g., 1.234.567)
+            $cleaned = str_replace('.', '', $cleaned);
+            
+            \Illuminate\Support\Facades\Log::debug('parseDecimal: multiple dots (thousands)', [
+                'cleaned' => $cleaned,
+            ]);
+        } elseif ($dotCount == 1) {
+            // Single dot - need to determine if thousands or decimal
+            $afterDot = substr($cleaned, strrpos($cleaned, '.') + 1);
+            $beforeDot = substr($cleaned, 0, strrpos($cleaned, '.'));
+            
+            \Illuminate\Support\Facades\Log::debug('parseDecimal: single dot analysis', [
+                'before_dot' => $beforeDot,
+                'after_dot' => $afterDot,
+                'after_dot_length' => strlen($afterDot),
+            ]);
+            
+            if (strlen($afterDot) == 3 && strlen($beforeDot) <= 3) {
+                // Pattern: XXX.XXX (e.g., 132.999, 159.999)
+                // Indonesian format: thousands separator
+                $cleaned = str_replace('.', '', $cleaned);
+                
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: dot as thousands (Indonesian)', [
+                    'cleaned' => $cleaned,
+                    'reason' => '3 digits after dot',
+                ]);
+            } else {
+                // Dot as decimal separator
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: dot as decimal', [
+                    'cleaned' => $cleaned,
+                ]);
+            }
+        } elseif ($commaCount > 0) {
+            // Only comma present
+            if ($commaCount > 1) {
+                // Multiple commas = thousands
+                $cleaned = str_replace(',', '', $cleaned);
+                
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: multiple commas (thousands)', [
+                    'cleaned' => $cleaned,
+                ]);
+            } else {
+                // Single comma
+                $afterComma = substr($cleaned, strrpos($cleaned, ',') + 1);
+                
+                \Illuminate\Support\Facades\Log::debug('parseDecimal: single comma analysis', [
+                    'after_comma' => $afterComma,
+                    'after_comma_length' => strlen($afterComma),
+                ]);
+                
+                if (strlen($afterComma) == 2) {
+                    // Likely decimal separator (e.g., 123,45)
+                    $cleaned = str_replace(',', '.', $cleaned);
+                    
+                    \Illuminate\Support\Facades\Log::debug('parseDecimal: comma as decimal', [
+                        'cleaned' => $cleaned,
+                    ]);
+                } else {
+                    // Thousands separator
+                    $cleaned = str_replace(',', '', $cleaned);
+                    
+                    \Illuminate\Support\Facades\Log::debug('parseDecimal: comma as thousands', [
+                        'cleaned' => $cleaned,
+                    ]);
+                }
+            }
+        }
+        
+        $result = (float) $cleaned;
+        
+        \Illuminate\Support\Facades\Log::debug('parseDecimal FINAL', [
+            'original' => $value,
+            'final_string' => $cleaned,
+            'final_float' => $result,
+        ]);
+        
+        return $result;
     }
+    
     
     /**
      * Parse integer value
@@ -452,26 +621,89 @@ abstract class AbstractParser
         return (int) preg_replace('/\D/', '', (string) $value);
     }
     
-    /**
+     /**
      * Parse date to Y-m-d format
+     * UPDATED: Explicitly handle DD/MM/YYYY format and Excel serial numbers
      * 
      * @param mixed $value
      * @return string
      */
     protected function parseDate($value): string
     {
-        if (is_null($value) || $value === '') {
+        if (is_null($value) || $value === '' || $value === '-') {
             return now()->format('Y-m-d');
         }
         
         try {
-            // Try multiple date formats
-            $date = \Carbon\Carbon::parse($value);
+            // Clean tabs, newlines first
+            $cleanValue = $this->cleanString($value);
+            
+            if ($cleanValue === '') {
+                return now()->format('Y-m-d');
+            }
+            
+            // Check if it's an Excel serial number (numeric value)
+            if (is_numeric($cleanValue)) {
+                $numValue = (float) $cleanValue;
+                
+                // Excel serial date (days since 1900-01-01)
+                // Valid range: 1 (1900-01-01) to ~50000 (2036+)
+                if ($numValue >= 1 && $numValue <= 100000) {
+                    // Excel incorrectly treats 1900 as a leap year
+                    $unixTimestamp = ($numValue - 25569) * 86400;
+                    $date = \Carbon\Carbon::createFromTimestamp($unixTimestamp);
+                    return $date->format('Y-m-d');
+                }
+            }
+            
+            // Detect DD/MM/YYYY format (common in TikTok, Shopee Indonesia)
+            // Pattern: 2 digits / 2 digits / 4 digits
+            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})/', $cleanValue, $matches)) {
+                $day = $matches[1];
+                $month = $matches[2];
+                $year = $matches[3];
+                
+                // Create date from DD/MM/YYYY
+                $date = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $cleanValue);
+                if (!$date) {
+                    // Try without time
+                    $date = \Carbon\Carbon::createFromFormat('d/m/Y', "$day/$month/$year");
+                }
+                
+                if ($date) {
+                    return $date->format('Y-m-d');
+                }
+            }
+            
+            // Try standard Carbon parse for other formats
+            $date = \Carbon\Carbon::parse($cleanValue);
+            
+            // Validation: Check if date is reasonable (not too far in past or future)
+            $now = \Carbon\Carbon::now();
+            $minDate = $now->copy()->subYears(5);
+            $maxDate = $now->copy()->addYears(2);
+            
+            if ($date->lt($minDate) || $date->gt($maxDate)) {
+                \Illuminate\Support\Facades\Log::warning('Parsed date out of reasonable range', [
+                    'original_value' => $value,
+                    'parsed_date' => $date->format('Y-m-d'),
+                    'using_current_date' => true,
+                ]);
+                return $now->format('Y-m-d');
+            }
+            
             return $date->format('Y-m-d');
+            
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Date parsing failed', [
+                'value' => $value,
+                'error' => $e->getMessage(),
+                'using_current_date' => true,
+            ]);
             return now()->format('Y-m-d');
         }
     }
+    
     
     /**
      * Generate unique transaction structure

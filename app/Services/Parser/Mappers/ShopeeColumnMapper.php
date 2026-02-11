@@ -49,8 +49,9 @@ class ShopeeColumnMapper implements ColumnMapperInterface
     public function getDateColumns(): array
     {
         return [
-            'Waktu Pesanan Selesai',
             'Waktu Pesanan Dibuat',
+            'Waktu Pembayaran Dilakukan', 
+            'Waktu Pesanan Selesai',
         ];
     }
     

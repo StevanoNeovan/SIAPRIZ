@@ -131,9 +131,17 @@ Route::middleware(['auth', 'verified.admin'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+    
+    // NEW: Product detail endpoint
+    Route::get('/dashboard/product/{id}/details', [DashboardController::class, 'showProductDetails'])
+        ->name('dashboard.product.details');
 
     Route::get('/infografis', [\App\Http\Controllers\InfografisController::class, 'index'])
         ->name('infografis.index');
+     
+    // NEW: Download report route
+    Route::get('/dashboard/download-report', [DashboardController::class, 'downloadReport'])
+        ->name('dashboard.download-report');
 
     /*
     |--------------------------------------------------------------------------

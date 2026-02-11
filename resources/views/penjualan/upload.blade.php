@@ -24,29 +24,6 @@
         </a>
     </div>
 
-    <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
-            <div class="flex">
-                <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <p class="ml-3 text-sm text-green-700">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <div class="flex">
-                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <p class="ml-3 text-sm text-red-700">{{ session('error') }}</p>
-            </div>
-        </div>
-    @endif
-
     <!-- Upload Form -->
     <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-5 border-b border-gray-200">
@@ -62,7 +39,10 @@
                     Tipe Upload <span class="text-red-500">*</span>
                 </label>
                 <div class="space-y-3">
-                    <label class="flex items-start p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg cursor-pointer">
+                    <label id="label-template"
+                          class="flex items-start p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg cursor-pointer transition">
+
+
                         <input type="radio" name="upload_type" value="template" class="mt-1" checked>
                         <div class="ml-3">
                             <div class="font-medium text-gray-900">Template SIAPRIZ (Recommended)</div>
@@ -70,7 +50,9 @@
                         </div>
                     </label>
                     
-                    <label class="flex items-start p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-gray-400">
+                    <label id="label-direct"
+                        class="flex items-start p-4 border-2 border-gray-300 rounded-lg cursor-pointer transition">
+
                         <input type="radio" name="upload_type" value="direct" class="mt-1">
                         <div class="ml-3">
                             <div class="font-medium text-gray-900">CSV Langsung dari Marketplace</div>
@@ -251,26 +233,39 @@
 </div>
 
 <script>
-    // File name display
-    document.getElementById('file').addEventListener('change', function(e) {
-        const fileName = e.target.files[0]?.name;
-        const fileNameDiv = document.getElementById('file-name');
-        
-        if (fileName) {
-            fileNameDiv.textContent = 'File dipilih: ' + fileName;
-            fileNameDiv.classList.remove('hidden');
-        } else {
-            fileNameDiv.classList.add('hidden');
-        }
-    });
-    
-    // Toggle info box based on upload type
+    // ===== Upload type UI toggle =====
     const uploadTypeRadios = document.querySelectorAll('input[name="upload_type"]');
-    const infoTemplate = document.getElementById('info-template');
-    const infoDirect = document.getElementById('info-direct');
-    
+    const labelTemplate = document.getElementById('label-template');
+    const labelDirect = document.getElementById('label-direct');
+
+    function setActiveLabel(type) {
+        // reset
+        [labelTemplate, labelDirect].forEach(label => {
+            label.classList.remove('border-indigo-500', 'bg-indigo-50');
+            label.classList.add('border-gray-300', 'bg-white');
+        });
+
+        // active
+        if (type === 'template') {
+            labelTemplate.classList.add('border-indigo-500', 'bg-indigo-50');
+            labelTemplate.classList.remove('border-gray-300');
+        } else {
+            labelDirect.classList.add('border-indigo-500', 'bg-indigo-50');
+            labelDirect.classList.remove('border-gray-300');
+        }
+    }
+
     uploadTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
+            setActiveLabel(this.value);
+
+            // reset file display (optional UX)
+            fileInput.value = '';
+            fileNameEl.classList.add('hidden');
+            fileNameEl.textContent = '';
+
+
+            // info box toggle (punyamu, tetap)
             if (this.value === 'template') {
                 infoTemplate.classList.remove('hidden');
                 infoDirect.classList.add('hidden');
@@ -279,6 +274,18 @@
                 infoDirect.classList.remove('hidden');
             }
         });
+            // ===== File input preview =====
+        const fileInput = document.getElementById('file');
+        const fileNameEl = document.getElementById('file-name');
+
+        fileInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                fileNameEl.textContent = `File dipilih: ${this.files[0].name}`;
+                fileNameEl.classList.remove('hidden');
+                fileNameEl.classList.add('text-indigo-600', 'font-medium');
+            }
+        });
     });
 </script>
+
 @endsection

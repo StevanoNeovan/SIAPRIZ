@@ -16,7 +16,13 @@
                 <!-- Left side: Logo & Menu -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600">SIAPRIZ</h1>
+                        <a href="{{ route('dashboard') }}">
+                            <img 
+                                src="{{ asset('images/logo-siapriz.png') }}" 
+                                alt="SIAPRIZ Logo"
+                                class="h-9 w-auto object-contain"
+                            >
+                        </a>
                     </div>
                     <div class="ml-6 flex space-x-8">
                         <a 

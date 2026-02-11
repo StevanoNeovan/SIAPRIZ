@@ -1,5 +1,6 @@
 <?php
 // app/Services/Parser/ShopeeParser.php
+// ENHANCED with debug logging
 
 namespace App\Services\Parser;
 
@@ -11,7 +12,7 @@ use App\Services\Parser\Mappers\ShopeeStatusMapper;
 
 /**
  * Shopee Parser - untuk format CSV asli Shopee
- * UPDATED: Hanya ambil total_pesanan (Total Pembayaran), abaikan komisi
+ * ENHANCED: Debug logging untuk trace price parsing
  */
 class ShopeeParser extends AbstractParser
 {
@@ -32,51 +33,79 @@ class ShopeeParser extends AbstractParser
     
     /**
      * Override parseFinancialData untuk custom logic Shopee
-     * UPDATED: Hanya ambil Total Pembayaran sebagai total_pesanan
+     * ENHANCED: Extensive debug logging
      */
     protected function parseFinancialData(array $row, ColumnMapperInterface $columnMapper): array
     {
-        // Total pembayaran = yang dibayar customer (pendapatan kotor)
-        $totalPembayaran = $this->parseDecimal($this->getColumnValue($row, 'Total Pembayaran'));
+        // Get raw values
+        $rawTotalPembayaran = $this->getColumnValue($row, 'Total Pembayaran');
+        $rawTotalDiskon = $this->getColumnValue($row, 'Total Diskon');
+        $rawOngkosKirim = $this->getColumnValue($row, 'Ongkos Kirim Dibayar oleh Pembeli');
         
-        // Ongkir yang dibayar customer
-        $ongkosKirim = $this->parseDecimal($this->getColumnValue($row, 'Ongkos Kirim Dibayar oleh Pembeli'));
+        \Illuminate\Support\Facades\Log::debug('ShopeeParser: Raw financial values', [
+            'Total Pembayaran' => $rawTotalPembayaran,
+            'Total Diskon' => $rawTotalDiskon,
+        ]);
         
-        // Total diskon = semua jenis diskon (opsional, untuk informasi)
-        $diskonPenjual = $this->parseDecimal($this->getColumnValue($row, 'Diskon Dari Penjual'));
-        $diskonShopee = $this->parseDecimal($this->getColumnValue($row, 'Diskon Dari Shopee'));
-        $voucherPenjual = $this->parseDecimal($this->getColumnValue($row, 'Voucher Ditanggung Penjual'));
-        $voucherShopee = $this->parseDecimal($this->getColumnValue($row, 'Voucher Ditanggung Shopee'));
-        $cashbackKoin = $this->parseDecimal($this->getColumnValue($row, 'Cashback Koin'));
-        $potonganKoin = $this->parseDecimal($this->getColumnValue($row, 'Potongan Koin Shopee'));
+        // Parse values
+        $totalPembayaran = $this->parseDecimal($rawTotalPembayaran);
+        $ongkosKirim = $this->parseDecimal($rawOngkosKirim);
         
-        $totalDiskon = $diskonPenjual + $diskonShopee + $voucherPenjual + $voucherShopee + $cashbackKoin + $potonganKoin;
+        // Total diskon
+        $totalDiskon = $this->parseDecimal($rawTotalDiskon);
         
-        return [
-            'total_pesanan' => $totalPembayaran,  // Pendapatan kotor
+        $result = [
+            'total_pesanan' => $totalPembayaran,
             'total_diskon' => $totalDiskon,
             'ongkos_kirim' => $ongkosKirim,
         ];
+        
+        \Illuminate\Support\Facades\Log::debug('ShopeeParser: Parsed financial data', [
+            'total_pesanan' => $totalPembayaran,
+            'total_diskon' => $totalDiskon,
+            'ongkos_kirim' => $ongkosKirim,
+        ]);
+        
+        return $result;
     }
     
     /**
      * Override parseItem untuk custom logic Shopee
+     * ENHANCED: Debug logging
      */
     protected function parseItem(array $row, ColumnMapperInterface $columnMapper): ?array
     {
-        $quantity = $this->parseInt($this->getColumnValue($row, 'Jumlah'));
-        $hargaSetelahDiskon = $this->parseDecimal($this->getColumnValue($row, 'Harga Setelah Diskon'));
-        $totalHargaProduk = $this->parseDecimal($this->getColumnValue($row, 'Total Harga Produk'));
+        $rawQuantity = $this->getColumnValue($row, 'Jumlah');
+        $rawHargaSetelahDiskon = $this->getColumnValue($row, 'Harga Setelah Diskon');
+        $rawTotalHargaProduk = $this->getColumnValue($row, 'Total Pembayaran');
+        $rawSKU = $this->getColumnValue($row, 'SKU Induk');
+        $rawNamaProduk = $this->getColumnValue($row, 'Nama Produk');
         
-        return [
-            'sku' => $this->cleanString($this->getColumnValue($row, 'SKU Induk')) ?: 
+        \Illuminate\Support\Facades\Log::debug('ShopeeParser: Raw item values', [
+            'SKU' => $rawSKU,
+            'Nama Produk' => $rawNamaProduk,
+            'Jumlah' => $rawQuantity,
+            'Harga Setelah Diskon' => $rawHargaSetelahDiskon,
+            'Total Pembayaran' => $rawTotalHargaProduk,
+        ]);
+        
+        $quantity = $this->parseInt($rawQuantity);
+        $hargaSetelahDiskon = $this->parseDecimal($rawHargaSetelahDiskon);
+        $totalHargaProduk = $this->parseDecimal($rawTotalHargaProduk);
+        
+        $item = [
+            'sku' => $this->cleanString($rawSKU) ?: 
                      $this->cleanString($this->getColumnValue($row, 'Nomor Referensi SKU')) ?: 
                      'SHOPEE-' . uniqid(),
-            'nama_produk' => $this->cleanString($this->getColumnValue($row, 'Nama Produk')),
+            'nama_produk' => $this->cleanString($rawNamaProduk),
             'variasi' => $this->cleanString($this->getColumnValue($row, 'Nama Variasi')),
             'quantity' => $quantity,
-            'harga_satuan' => $hargaSetelahDiskon, // Harga setelah diskon per item
-            'subtotal' => $totalHargaProduk, // Total harga produk (qty * harga)
+            'harga_satuan' => $hargaSetelahDiskon,
+            'subtotal' => $totalHargaProduk,
         ];
+        
+        \Illuminate\Support\Facades\Log::debug('ShopeeParser: Parsed item', $item);
+        
+        return $item;
     }
 }
