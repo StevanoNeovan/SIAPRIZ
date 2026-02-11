@@ -23,7 +23,7 @@ class DashboardRepository implements DashboardRepositoryInterface
 
             return $result[0] ?? null;
         } catch (\Exception $e) {
-            Log::error('Error in getSummary: ' . $e->getMessage());
+            \Log::error('Error in getSummary: ' . $e->getMessage());
             return null;
         }
     }
