@@ -139,6 +139,7 @@ class UploadService
                     // Create transaction header
                    $transaksi = PenjualanTransaksi::updateOrCreate(
                     [
+                        'id_perusahaan' => $transaction['header']['id_perusahaan'],
                         'order_id' => $transaction['header']['order_id'],
                         'id_marketplace' => $transaction['header']['id_marketplace'],
                     ],
