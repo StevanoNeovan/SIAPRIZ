@@ -1,4 +1,3 @@
-<!-- resources/views/profil-usaha/index.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Profil Usaha')
@@ -66,12 +65,20 @@
                                 <p class="text-xl font-bold text-gray-900">{{ $profil->nama_perusahaan }}</p>
                             </div>
 
-                            <!-- Bidang Usaha -->
+                            <!-- Bidang Usaha (Dropdown value) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-500 mb-1">
                                     Bidang Usaha
                                 </label>
                                 <p class="text-base text-gray-900">{{ $profil->bidang_usaha }}</p>
+                            </div>
+
+                            <!-- ✅ Jenis Usaha (Text input value) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">
+                                    Jenis Usaha
+                                </label>
+                                <p class="text-base text-gray-900">{{ $profil->jenis_usaha ?? '-' }}</p>
                             </div>
 
                             <!-- Timestamp -->

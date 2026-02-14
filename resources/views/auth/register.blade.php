@@ -160,6 +160,22 @@
             box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
         }
 
+        /* Style untuk select dropdown */
+        .form-input select,
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        select.form-input option {
+            padding: 0.5rem;
+        }
+
         .form-input.error {
             border-color: #ef4444;
         }
@@ -295,18 +311,39 @@
                     @enderror
                 </div>
 
+                <!-- Bidang Usaha (Dropdown) -->
                 <div class="form-group">
                     <label for="bidang_usaha" class="form-label">Bidang Usaha</label>
-                    <input 
+                    <select 
                         id="bidang_usaha" 
                         name="bidang_usaha" 
+                        required 
+                        class="form-input @error('bidang_usaha') error @enderror"
+                    >
+                        <option value="">Pilih Bidang Usaha</option>
+                        <option value="Jasa" {{ old('bidang_usaha') == 'Jasa' ? 'selected' : '' }}>Jasa</option>
+                        <option value="Dagang" {{ old('bidang_usaha') == 'Dagang' ? 'selected' : '' }}>Dagang</option>
+                        <option value="Manufaktur" {{ old('bidang_usaha') == 'Manufaktur' ? 'selected' : '' }}>Manufaktur</option>
+                        <option value="Lainnya" {{ old('bidang_usaha') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                    </select>
+                    @error('bidang_usaha')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Jenis Usaha (Text Input) -->
+                <div class="form-group">
+                    <label for="jenis_usaha" class="form-label">Jenis Usaha</label>
+                    <input 
+                        id="jenis_usaha" 
+                        name="jenis_usaha" 
                         type="text" 
                         required 
-                        class="form-input @error('bidang_usaha') error @enderror" 
-                        placeholder="Masukkan bidang usaha"
-                        value="{{ old('bidang_usaha') }}"
+                        class="form-input @error('jenis_usaha') error @enderror" 
+                        placeholder="Contoh: Elektronik, Fashion, Makanan, dll"
+                        value="{{ old('jenis_usaha') }}"
                     >
-                    @error('bidang_usaha')
+                    @error('jenis_usaha')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>

@@ -31,9 +31,7 @@
         </div>
     @endif
 
-    <!-- ======================
-         FORM UPDATE PROFIL
-    ======================= -->
+    <!-- FORM UPDATE PROFIL -->
     <form action="{{ route('profil-usaha.update') }}"
           method="POST"
           enctype="multipart/form-data"
@@ -78,23 +76,51 @@
                     <!-- Nama Perusahaan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Nama Perusahaan
+                            Nama Perusahaan <span class="text-red-500">*</span>
                         </label>
                         <input type="text"
                                name="nama_perusahaan"
+                               required
                                value="{{ old('nama_perusahaan', $profil->nama_perusahaan) }}"
-                               class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+                               class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 @error('nama_perusahaan') border-red-500 @enderror">
+                        @error('nama_perusahaan')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <!-- Bidang Usaha -->
+                    <!-- ✅ Bidang Usaha (Dropdown) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Bidang Usaha
+                            Bidang Usaha <span class="text-red-500">*</span>
+                        </label>
+                        <select name="bidang_usaha"
+                                required
+                                class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 @error('bidang_usaha') border-red-500 @enderror">
+                            <option value="">Pilih Bidang Usaha</option>
+                            <option value="Jasa" {{ old('bidang_usaha', $profil->bidang_usaha) == 'Jasa' ? 'selected' : '' }}>Jasa</option>
+                            <option value="Dagang" {{ old('bidang_usaha', $profil->bidang_usaha) == 'Dagang' ? 'selected' : '' }}>Dagang</option>
+                            <option value="Manufaktur" {{ old('bidang_usaha', $profil->bidang_usaha) == 'Manufaktur' ? 'selected' : '' }}>Manufaktur</option>
+                            <option value="Lainnya" {{ old('bidang_usaha', $profil->bidang_usaha) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                        </select>
+                        @error('bidang_usaha')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- ✅ Jenis Usaha (Text Input) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Jenis Usaha <span class="text-red-500">*</span>
                         </label>
                         <input type="text"
-                               name="bidang_usaha"
-                               value="{{ old('bidang_usaha', $profil->bidang_usaha) }}"
-                               class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+                               name="jenis_usaha"
+                               required
+                               value="{{ old('jenis_usaha', $profil->jenis_usaha) }}"
+                               placeholder="Contoh: Elektronik, Fashion, Makanan, dll"
+                               class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 @error('jenis_usaha') border-red-500 @enderror">
+                        @error('jenis_usaha')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Tombol Hapus Logo -->
@@ -111,7 +137,7 @@
             </div>
         </div>
 
-        <!-- Footer (TIDAK DIUBAH) -->
+        <!-- Footer -->
         <div class="bg-gray-50 px-6 py-4 flex justify-end gap-2 border-t border-gray-200">
             <a href="{{ route('profil-usaha.index') }}"
                class="px-4 py-2 border rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50">
@@ -125,9 +151,7 @@
         </div>
     </form>
 
-    <!-- ======================
-         FORM HAPUS LOGO (TERSEMBUNYI)
-    ======================= -->
+    <!-- FORM HAPUS LOGO (TERSEMBUNYI) -->
     @if($profil->logo_url)
         <form id="form-hapus-logo"
               action="{{ route('profil-usaha.remove-logo') }}"

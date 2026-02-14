@@ -14,9 +14,7 @@ class ProfilUsahaController extends Controller
      */
     public function index()
     {
-        // Ambil profil perusahaan pertama (asumsi single company)
         $profil = Auth::user()->perusahaan;
-
         return view('profil-usaha.index', compact('profil'));
     }
 
@@ -24,17 +22,16 @@ class ProfilUsahaController extends Controller
      * Show the form for creating a new profil usaha
      */
     public function create()
-{
-    $profil = Auth::user()->perusahaan;
+    {
+        $profil = Auth::user()->perusahaan;
 
-    if ($profil) {
-        return redirect()->route('profil-usaha.index')
-            ->with('error', 'Profil usaha sudah ada. Silakan edit.');
+        if ($profil) {
+            return redirect()->route('profil-usaha.index')
+                ->with('error', 'Profil usaha sudah ada. Silakan edit.');
+        }
+
+        return view('profil-usaha.create');
     }
-
-    return view('profil-usaha.create');
-}
-
 
     /**
      * Store a newly created profil usaha in storage
@@ -43,11 +40,14 @@ class ProfilUsahaController extends Controller
     {
         $validated = $request->validate([
             'nama_perusahaan' => 'required|string|max:255',
-            'bidang_usaha' => 'required|string|max:255',
+            'bidang_usaha' => ['required', 'in:Jasa,Dagang,Manufaktur,Lainnya'], // ✅ Dropdown validation
+            'jenis_usaha' => 'required|string|max:255', // ✅ Text input
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'nama_perusahaan.required' => 'Nama perusahaan wajib diisi',
-            'bidang_usaha.required' => 'Bidang usaha wajib diisi',
+            'bidang_usaha.required' => 'Bidang usaha wajib dipilih',
+            'bidang_usaha.in' => 'Bidang usaha tidak valid',
+            'jenis_usaha.required' => 'Jenis usaha wajib diisi',
             'logo.image' => 'File harus berupa gambar',
             'logo.mimes' => 'Logo harus berformat: jpeg, png, jpg, atau gif',
             'logo.max' => 'Ukuran logo maksimal 2MB',
@@ -65,6 +65,7 @@ class ProfilUsahaController extends Controller
             'id_perusahaan' => Auth::user()->id_perusahaan,
             'nama_perusahaan' => $validated['nama_perusahaan'],
             'bidang_usaha' => $validated['bidang_usaha'],
+            'jenis_usaha' => $validated['jenis_usaha'], // ✅ Simpan jenis usaha
             'logo_url' => $logoUrl,
             'is_aktif' => true,
         ]);
@@ -102,11 +103,14 @@ class ProfilUsahaController extends Controller
 
         $validated = $request->validate([
             'nama_perusahaan' => 'required|string|max:255',
-            'bidang_usaha' => 'required|string|max:255',
+            'bidang_usaha' => ['required', 'in:Jasa,Dagang,Manufaktur,Lainnya'], // ✅ Dropdown validation
+            'jenis_usaha' => 'required|string|max:255', // ✅ Text input
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'nama_perusahaan.required' => 'Nama perusahaan wajib diisi',
-            'bidang_usaha.required' => 'Bidang usaha wajib diisi',
+            'bidang_usaha.required' => 'Bidang usaha wajib dipilih',
+            'bidang_usaha.in' => 'Bidang usaha tidak valid',
+            'jenis_usaha.required' => 'Jenis usaha wajib diisi',
             'logo.image' => 'File harus berupa gambar',
             'logo.mimes' => 'Logo harus berformat: jpeg, png, jpg, atau gif',
             'logo.max' => 'Ukuran logo maksimal 2MB',
