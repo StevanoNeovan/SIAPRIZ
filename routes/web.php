@@ -165,6 +165,9 @@ Route::middleware(['auth', 'verified.admin'])->group(function () {
 
         Route::get('/penjualan/upload/{id}/download', [\App\Http\Controllers\UploadPenjualanController::class, 'downloadFile'])
             ->name('penjualan.download');
+        
+        Route::delete('/penjualan/upload/{id}', [\App\Http\Controllers\UploadPenjualanController::class, 'destroy'])
+        ->name('penjualan.upload.destroy');
 
         // Profil Usaha
         Route::get('/profil-usaha', [\App\Http\Controllers\ProfilUsahaController::class, 'index'])

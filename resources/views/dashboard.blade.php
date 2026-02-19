@@ -164,12 +164,15 @@
         </div>
     </div>
 
-    <!-- Requirement 3: Top Products (Kinerja Total Per Produk) -->
+    <!-- Requirement 3: Top Products (Kinerja Total Per Produk) dengan Pagination -->
     <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">
-                Produk Terlaris - Total Semua Marketplace
-            </h3>
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Produk Terlaris - Total Semua Marketplace
+                </h3>
+                <p class="text-sm text-gray-500 mt-1" id="topProductsInfo"></p>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -183,46 +186,19 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($top_products as $index => $product)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($index < 3)
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full 
-                                        {{ $index === 0 ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $index === 1 ? 'bg-gray-100 text-gray-800' : '' }}
-                                        {{ $index === 2 ? 'bg-orange-100 text-orange-800' : '' }}
-                                        font-bold">
-                                        {{ $index + 1 }}
-                                    </span>
-                                @else
-                                    <span class="text-sm text-gray-900">{{ $index + 1 }}</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $product->nama_produk }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($product->total_terjual) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">Rp {{ number_format($product->total_pendapatan, 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($product->jumlah_transaksi) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <button 
-                                    onclick="showProductDetail({{ $product->id_produk }}, '{{ $product->nama_produk }}')"
-                                    class="text-indigo-600 hover:text-indigo-900 font-medium"
-                                >
-                                    Detail
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data produk</td>
-                        </tr>
-                    @endforelse
+                <tbody id="topProductsTableBody" class="bg-white divide-y divide-gray-200">
+                    {{-- Diisi oleh JavaScript --}}
                 </tbody>
             </table>
         </div>
+        <!-- Pagination Top Products -->
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-500" id="topProductsPaginationInfo"></div>
+            <div id="topProductsPagination" class="flex items-center gap-1"></div>
+        </div>
     </div>
 
-    <!-- Requirement 2: Kinerja Produk Per Marketplace -->
+    <!-- Requirement 2: Kinerja Produk Per Marketplace dengan Pagination -->
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
@@ -230,47 +206,8 @@
             </h3>
             <p class="text-sm text-gray-600 mt-1">Detail penjualan produk di setiap marketplace</p>
         </div>
-        <div class="p-6">
-            @forelse($product_per_marketplace as $marketplace_name => $products)
-                <div class="mb-6 last:mb-0">
-                    <h4 class="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                        <span class="bg-indigo-500 text-white px-3 py-1 rounded-md mr-2">{{ $marketplace_name }}</span>
-                    </h4>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 border">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Nama Produk</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Total Terjual</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Pendapatan</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Order</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($products as $product)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-2 text-sm text-gray-900">{{ $product['nama_produk'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-gray-900">{{ number_format($product['total_terjual']) }}</td>
-                                        <td class="px-4 py-2 text-sm text-green-600 font-medium">{{ $product['total_pendapatan_formatted'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-gray-500">{{ number_format($product['jumlah_order']) }}</td>
-                                        <td class="px-4 py-2 text-sm">
-                                            <button 
-                                                onclick="showProductDetail({{ $product['id_produk'] }}, '{{ $product['nama_produk'] }}')"
-                                                class="text-indigo-600 hover:text-indigo-900 font-medium"
-                                            >
-                                                Detail
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            @empty
-                <p class="text-center text-sm text-gray-500 py-4">Belum ada data produk per marketplace</p>
-            @endforelse
+        <div class="p-6" id="productPerMarketplaceContainer">
+            {{-- Diisi oleh JavaScript --}}
         </div>
     </div>
 </div>
@@ -316,22 +253,296 @@
 
 <!-- Chart.js Script -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
-    /* =========================
+    /* =====================================================
+       DATA FROM BLADE (PHP → JS)
+    ====================================================== */
+    const topProductsRaw   = @json($top_products);
+    const productPerMpRaw  = @json($product_per_marketplace);
+    const salesData        = @json($chart_data);
+    const marketplaceData  = @json($marketplace_chart_data);
+
+    /* =====================================================
+       PAGINATION — Event Delegation (fix: no callback serialization)
+       Semua tombol pakai data-table + data-page attribute.
+       Satu listener di document menangani semua klik.
+    ====================================================== */
+    const ROWS_PER_PAGE = 10;
+
+    // Registry: { tableKey: renderFn }
+    // renderFn(page) akan dipanggil saat tombol diklik
+    const paginationRegistry = {};
+
+    /** Daftarkan tabel ke registry */
+    function registerTable(tableKey, renderFn) {
+        paginationRegistry[tableKey] = renderFn;
+    }
+
+    // Satu global listener — tangkap semua klik tombol pagination
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-pagination-btn]');
+        if (!btn || btn.disabled) return;
+
+        const tableKey = btn.dataset.table;
+        const page     = parseInt(btn.dataset.page, 10);
+
+        if (paginationRegistry[tableKey]) {
+            paginationRegistry[tableKey](page);
+        }
+    });
+
+    /**
+     * Render pagination controls.
+     * Tombol memakai data-table & data-page — tidak ada onclick string.
+     */
+    function renderPagination(containerId, infoId, tableKey, currentPage, totalItems) {
+        const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+        const container  = document.getElementById(containerId);
+        const infoEl     = document.getElementById(infoId);
+
+        // Info teks
+        if (infoEl) {
+            const from = Math.min((currentPage - 1) * ROWS_PER_PAGE + 1, totalItems);
+            const to   = Math.min(currentPage * ROWS_PER_PAGE, totalItems);
+            infoEl.textContent = totalItems > 0
+                ? `Menampilkan ${from}–${to} dari ${totalItems} produk`
+                : 'Tidak ada data';
+        }
+
+        if (!container || totalPages <= 1) {
+            if (container) container.innerHTML = '';
+            return;
+        }
+
+        // Range nomor halaman (maks 5 di tengah)
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage   = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+        const prevDisabled = currentPage === 1;
+        const nextDisabled = currentPage === totalPages;
+
+        let html = '';
+
+        // Tombol Previous
+        html += `
+            <button data-pagination-btn data-table="${tableKey}" data-page="${currentPage - 1}"
+                ${prevDisabled ? 'disabled' : ''}
+                class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border
+                       ${prevDisabled ? 'text-gray-300 border-gray-200 cursor-not-allowed' : 'text-gray-600 border-gray-300 hover:bg-gray-50 cursor-pointer'}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Sebelumnya
+            </button>`;
+
+        // Ellipsis kiri
+        if (startPage > 1) {
+            html += pageBtn(tableKey, 1, currentPage);
+            if (startPage > 2) html += `<span class="px-2 py-1.5 text-gray-400 text-sm">...</span>`;
+        }
+
+        // Nomor halaman
+        for (let p = startPage; p <= endPage; p++) {
+            html += pageBtn(tableKey, p, currentPage);
+        }
+
+        // Ellipsis kanan
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) html += `<span class="px-2 py-1.5 text-gray-400 text-sm">...</span>`;
+            html += pageBtn(tableKey, totalPages, currentPage);
+        }
+
+        // Tombol Next
+        html += `
+            <button data-pagination-btn data-table="${tableKey}" data-page="${currentPage + 1}"
+                ${nextDisabled ? 'disabled' : ''}
+                class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border
+                       ${nextDisabled ? 'text-gray-300 border-gray-200 cursor-not-allowed' : 'text-gray-600 border-gray-300 hover:bg-gray-50 cursor-pointer'}">
+                Berikutnya
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>`;
+
+        container.innerHTML = html;
+    }
+
+    /** Buat satu tombol nomor halaman */
+    function pageBtn(tableKey, page, currentPage) {
+        const isActive = page === currentPage;
+        return `
+            <button data-pagination-btn data-table="${tableKey}" data-page="${page}"
+                class="w-9 h-9 flex items-center justify-center text-sm font-medium rounded-md border
+                       ${isActive ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 border-gray-300 hover:bg-gray-50 cursor-pointer'}">
+                ${page}
+            </button>`;
+    }
+
+    /* =====================================================
+       TABEL 1: PRODUK TERLARIS (dengan pagination)
+    ====================================================== */
+    function renderTopProducts(page) {
+        const start = (page - 1) * ROWS_PER_PAGE;
+        const slice = topProductsRaw.slice(start, start + ROWS_PER_PAGE);
+        const tbody = document.getElementById('topProductsTableBody');
+
+        if (topProductsRaw.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada data produk</td>
+                </tr>`;
+        } else {
+            tbody.innerHTML = slice.map((product, idx) => {
+                const globalIndex = start + idx;
+
+                let badgeClass = '';
+                if (globalIndex === 0) badgeClass = 'bg-yellow-100 text-yellow-800';
+                else if (globalIndex === 1) badgeClass = 'bg-gray-100 text-gray-800';
+                else if (globalIndex === 2) badgeClass = 'bg-orange-100 text-orange-800';
+
+                const rankBadge = globalIndex < 3
+                    ? `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${badgeClass}">${globalIndex + 1}</span>`
+                    : `<span class="text-sm text-gray-900">${globalIndex + 1}</span>`;
+
+                const pendapatan = Number(product.total_pendapatan ?? 0).toLocaleString('id-ID');
+                const namaSafe   = (product.nama_produk ?? '').replace(/'/g, "\\'");
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">${rankBadge}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${product.nama_produk ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${Number(product.total_terjual ?? 0).toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">Rp ${pendapatan}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${Number(product.jumlah_transaksi ?? 0).toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button onclick="showProductDetail(${product.id_produk}, '${namaSafe}')"
+                                class="text-indigo-600 hover:text-indigo-900 font-medium">Detail</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        renderPagination('topProductsPagination', 'topProductsPaginationInfo', 'top-products', page, topProductsRaw.length);
+    }
+
+    // Daftarkan ke registry
+    registerTable('top-products', renderTopProducts);
+
+    /* =====================================================
+       TABEL 2: PRODUK PER MARKETPLACE (dengan pagination per marketplace)
+    ====================================================== */
+
+    // State halaman per marketplace: { 'Shopee': 1, 'Tokopedia': 1, ... }
+    const mpPages = {};
+
+    function renderProductPerMarketplace() {
+        const container = document.getElementById('productPerMarketplaceContainer');
+
+        if (Object.keys(productPerMpRaw).length === 0) {
+            container.innerHTML = `<p class="text-center text-sm text-gray-500 py-4">Belum ada data produk per marketplace</p>`;
+            return;
+        }
+
+        // Render skeleton HTML untuk setiap marketplace
+        let html = '';
+        for (const [mpName, products] of Object.entries(productPerMpRaw)) {
+            if (!mpPages[mpName]) mpPages[mpName] = 1;
+            const id = safeId(mpName);
+
+            html += `
+                <div class="mb-8 last:mb-0" id="mp-section-${id}">
+                    <h4 class="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                        <span class="bg-indigo-500 text-white px-3 py-1 rounded-md mr-2">${mpName}</span>
+                        <span class="text-sm text-gray-400 font-normal">${products.length} produk</span>
+                    </h4>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Produk</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Terjual</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pendapatan</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mp-tbody-${id}" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="mt-3 flex items-center justify-between">
+                        <div class="text-sm text-gray-500" id="mp-info-${id}"></div>
+                        <div id="mp-pagination-${id}" class="flex items-center gap-1"></div>
+                    </div>
+                </div>`;
+        }
+
+        container.innerHTML = html;
+
+        // Register tiap marketplace & render halaman pertama
+        for (const mpName of Object.keys(productPerMpRaw)) {
+            const id       = safeId(mpName);
+            const tableKey = `mp-${id}`;
+            // Closure IIFE agar mpName tidak terbawa referensi loop
+            registerTable(tableKey, ((name) => (p) => renderMpTable(name, p))(mpName));
+            renderMpTable(mpName, 1);
+        }
+    }
+
+    function renderMpTable(mpName, page) {
+        mpPages[mpName] = page;
+        const products = productPerMpRaw[mpName] ?? [];
+        const start    = (page - 1) * ROWS_PER_PAGE;
+        const slice    = products.slice(start, start + ROWS_PER_PAGE);
+        const id       = safeId(mpName);
+        const tableKey = `mp-${id}`;
+        const tbody    = document.getElementById(`mp-tbody-${id}`);
+
+        if (!tbody) return;
+
+        tbody.innerHTML = slice.map(product => {
+            const namaSafe = (product.nama_produk ?? '').replace(/'/g, "\\'");
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 text-sm text-gray-900">${product.nama_produk ?? '-'}</td>
+                    <td class="px-4 py-2 text-sm text-gray-900">${Number(product.total_terjual ?? 0).toLocaleString('id-ID')}</td>
+                    <td class="px-4 py-2 text-sm text-green-600 font-medium">${product.total_pendapatan_formatted ?? '-'}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">${Number(product.jumlah_order ?? 0).toLocaleString('id-ID')}</td>
+                    <td class="px-4 py-2 text-sm">
+                        <button onclick="showProductDetail(${product.id_produk}, '${namaSafe}')"
+                            class="text-indigo-600 hover:text-indigo-900 font-medium">Detail</button>
+                    </td>
+                </tr>`;
+        }).join('');
+
+        renderPagination(`mp-pagination-${id}`, `mp-info-${id}`, tableKey, page, products.length);
+    }
+
+    /** Buat ID aman dari nama marketplace (hilangkan spasi/karakter khusus) */
+    function safeId(name) {
+        return name.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    /* =====================================================
+       INISIALISASI TABEL
+    ====================================================== */
+    renderTopProducts(1);
+    renderProductPerMarketplace();
+
+    /* =====================================================
        DOWNLOAD REPORT
-    ==========================*/
+    ====================================================== */
     function downloadReport() {
         const tanggalMulai = document.getElementById('tanggal_mulai').value || '{{ $periode['mulai'] }}';
         const tanggalAkhir = document.getElementById('tanggal_akhir').value || '{{ $periode['akhir'] }}';
-        
         window.location.href = `/dashboard/download-report?tanggal_mulai=${tanggalMulai}&tanggal_akhir=${tanggalAkhir}`;
     }
 
-    /* =========================
+    /* =====================================================
        SALES TREND CHART
-    ==========================*/
-    const salesData = @json($chart_data);
-
+    ====================================================== */
     new Chart(document.getElementById('salesTrendChart'), {
         type: 'line',
         data: {
@@ -349,37 +560,26 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
+                legend: { display: true, position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) =>
-                            'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
-                        afterLabel: (ctx) =>
-                            'Total Order: ' + salesData.total_order[ctx.dataIndex]
+                        label:       (ctx) => 'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
+                        afterLabel:  (ctx) => 'Total Order: ' + salesData.total_order[ctx.dataIndex]
                     }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'Rp ' + value.toLocaleString('id-ID');
-                        }
-                    }
+                    ticks: { callback: (v) => 'Rp ' + v.toLocaleString('id-ID') }
                 }
             }
         }
     });
 
-    /* =========================
-       MARKETPLACE CHART - FIXED
-    ==========================*/
-    const marketplaceData = @json($marketplace_chart_data);
-
+    /* =====================================================
+       MARKETPLACE CHART
+    ====================================================== */
     new Chart(document.getElementById('marketplaceChart'), {
         type: 'bar',
         data: {
@@ -396,10 +596,8 @@
             plugins: {
                 tooltip: {
                     callbacks: {
-                        label: (ctx) =>
-                            'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
-                        afterLabel: (ctx) =>
-                            'Total Order: ' + marketplaceData.total_order[ctx.dataIndex]
+                        label:      (ctx) => 'Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID'),
+                        afterLabel: (ctx) => 'Total Order: ' + marketplaceData.total_order[ctx.dataIndex]
                     }
                 },
                 legend: { display: false }
@@ -407,39 +605,37 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: (v) => 'Rp ' + v.toLocaleString('id-ID')
-                    }
+                    ticks: { callback: (v) => 'Rp ' + v.toLocaleString('id-ID') }
                 }
             }
         }
     });
 
-    /* =========================
+    /* =====================================================
        PRODUCT DETAIL MODAL
-    ==========================*/
+    ====================================================== */
     function showProductDetail(productId, productName) {
-        const modal = document.getElementById('productDetailModal');
+        const modal     = document.getElementById('productDetailModal');
         const modalTitle = document.getElementById('modalProductName');
-        const loading = document.getElementById('modalLoading');
-        const content = document.getElementById('modalContent');
+        const loading   = document.getElementById('modalLoading');
+        const content   = document.getElementById('modalContent');
         const tableBody = document.getElementById('modalTableBody');
-        
+
         modal.classList.remove('hidden');
         modalTitle.textContent = `Detail Transaksi: ${productName}`;
-        
+
         loading.classList.remove('hidden');
         content.classList.add('hidden');
-        
+
         const tanggalMulai = document.getElementById('tanggal_mulai').value || '{{ $periode['mulai'] }}';
         const tanggalAkhir = document.getElementById('tanggal_akhir').value || '{{ $periode['akhir'] }}';
-        
+
         fetch(`/dashboard/product/${productId}/details?tanggal_mulai=${tanggalMulai}&tanggal_akhir=${tanggalAkhir}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
-                
+
                 if (data.success && data.data.length > 0) {
                     tableBody.innerHTML = data.data.map(tx => `
                         <tr class="hover:bg-gray-50">
@@ -452,40 +648,30 @@
                             <td class="px-4 py-3 text-sm text-gray-900">${tx.harga_satuan}</td>
                             <td class="px-4 py-3 text-sm font-semibold text-green-600">${tx.subtotal}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${tx.variasi}</td>
-                        </tr>
-                    `).join('');
+                        </tr>`).join('');
                 } else {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                                Tidak ada transaksi ditemukan
-                            </td>
-                        </tr>
-                    `;
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">Tidak ada transaksi ditemukan</td>
+                        </tr>`;
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
+            .catch(() => {
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-red-500">
-                            Terjadi kesalahan saat memuat data
-                        </td>
-                    </tr>
-                `;
+                        <td colspan="9" class="px-4 py-8 text-center text-red-500">Terjadi kesalahan saat memuat data</td>
+                    </tr>`;
             });
     }
-    
+
     function closeProductDetail() {
         document.getElementById('productDetailModal').classList.add('hidden');
     }
-    
-    document.getElementById('productDetailModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeProductDetail();
-        }
+
+    document.getElementById('productDetailModal').addEventListener('click', function (e) {
+        if (e.target === this) closeProductDetail();
     });
 </script>
 @endsection

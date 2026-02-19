@@ -6,10 +6,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PenjualanTransaksiDetail extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'penjualan_transaksi_detail';
     protected $primaryKey = 'id_detail';
@@ -26,12 +28,18 @@ class PenjualanTransaksiDetail extends Model
         'quantity', // FIXED: not jumlah
         'harga_satuan',
         'subtotal',
+        'deleted_at',
     ];
 
     protected $casts = [
         'quantity' => 'integer', // FIXED
         'harga_satuan' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected $dates = [
+        'deleted_at',
     ];
 
     public function transaksi()

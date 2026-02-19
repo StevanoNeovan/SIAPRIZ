@@ -6,10 +6,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PenjualanTransaksi extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'penjualan_transaksi';
     protected $primaryKey = 'id_transaksi';
@@ -32,6 +34,7 @@ class PenjualanTransaksi extends Model
         'kota_customer',
         'provinsi_customer',
         'id_batch_upload',
+        'deleted_at',
     ];
 
     protected $casts = [
@@ -41,6 +44,12 @@ class PenjualanTransaksi extends Model
         'ongkos_kirim' => 'decimal:2',
         'biaya_komisi' => 'decimal:2',
         'pendapatan_bersih' => 'decimal:2',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected $dates = [
+        'tanggal_order',
+        'deleted_at',
     ];
 
     public function perusahaan()
@@ -59,6 +68,11 @@ class PenjualanTransaksi extends Model
     }
 
     public function logUpload()
+    {
+        return $this->belongsTo(LogUpload::class, 'id_batch_upload', 'id_upload');
+    }
+
+     public function batchUpload()
     {
         return $this->belongsTo(LogUpload::class, 'id_batch_upload', 'id_upload');
     }

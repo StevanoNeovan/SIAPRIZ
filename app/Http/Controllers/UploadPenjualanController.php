@@ -112,4 +112,30 @@ class UploadPenjualanController extends Controller
         
         return Storage::disk('public')->download($log->file_path, $log->nama_file);
     }
+
+     /**
+     * Delete upload log AND semua transaksi terkait
+     * Route: DELETE /penjualan/upload/{id}
+     */
+    public function destroy(int $id)
+    {
+        $log = \App\Models\LogUpload::where('id_perusahaan', auth()->user()->id_perusahaan)
+            ->findOrFail($id);
+
+        // 1. Hapus file fisik jika ada
+        if ($log->hasFile()) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($log->file_path);
+        }
+
+        // 2. Hapus semua penjualan_transaksi yang terkait batch ini
+        //    (penjualan_transaksi_detail terhapus otomatis via ON DELETE CASCADE)
+        \App\Models\PenjualanTransaksi::where('id_batch_upload', $id)->delete();
+
+        // 3. Hapus log upload
+        $log->delete();
+
+        return redirect()
+            ->route('penjualan.upload')
+            ->with('success', 'Upload beserta data transaksinya berhasil dihapus.');
+    }
 }

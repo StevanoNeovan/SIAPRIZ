@@ -41,8 +41,6 @@
                 <div class="space-y-3">
                     <label id="label-template"
                           class="flex items-start p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg cursor-pointer transition">
-
-
                         <input type="radio" name="upload_type" value="template" class="mt-1" checked>
                         <div class="ml-3">
                             <div class="font-medium text-gray-900">Template SIAPRIZ (Recommended)</div>
@@ -52,7 +50,6 @@
                     
                     <label id="label-direct"
                         class="flex items-start p-4 border-2 border-gray-300 rounded-lg cursor-pointer transition">
-
                         <input type="radio" name="upload_type" value="direct" class="mt-1">
                         <div class="ml-3">
                             <div class="font-medium text-gray-900">CSV Langsung dari Marketplace</div>
@@ -150,7 +147,7 @@
         </form>
     </div>
 
-    <!-- Upload History (sama seperti sebelumnya) -->
+    <!-- Upload History -->
     <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-5 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Riwayat Upload</h3>
@@ -212,11 +209,19 @@
                                     <div class="text-red-600">Gagal: {{ $log->baris_gagal }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                 <a href="{{ route('penjualan.upload-detail', $log->id_upload) }}" 
                                    class="text-indigo-600 hover:text-indigo-900">
                                     Detail
                                 </a>
+                                
+                                @if($log->canBeDeleted())
+                                    <button 
+                                        onclick="confirmDelete({{ $log->id_upload }}, '{{ $log->nama_file }}', {{ $log->getTransactionCount() }})"
+                                        class="text-red-600 hover:text-red-900">
+                                        Hapus
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -232,11 +237,58 @@
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Icon Warning -->
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            
+            <div class="mt-2 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Hapus Upload?</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">
+                        Anda akan menghapus upload:
+                    </p>
+                    <p class="text-sm font-semibold text-gray-900 mt-2" id="deleteFileName"></p>
+                    <p class="text-sm text-red-600 font-medium mt-3" id="deleteImpact"></p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Data tidak akan benar-benar terhapus, hanya dinonaktifkan dari sistem.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="items-center px-4 py-3 flex gap-3">
+                <button 
+                    onclick="closeDeleteModal()"
+                    class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition">
+                    Batal
+                </button>
+                <form id="deleteForm" method="POST" class="flex-1">
+                    @csrf
+                    @method('DELETE')
+                    <button 
+                        type="submit"
+                        class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+                        Ya, Hapus
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // ===== Upload type UI toggle =====
     const uploadTypeRadios = document.querySelectorAll('input[name="upload_type"]');
     const labelTemplate = document.getElementById('label-template');
     const labelDirect = document.getElementById('label-direct');
+    const infoTemplate = document.getElementById('info-template');
+    const infoDirect = document.getElementById('info-direct');
 
     function setActiveLabel(type) {
         // reset
@@ -259,13 +311,14 @@
         radio.addEventListener('change', function () {
             setActiveLabel(this.value);
 
-            // reset file display (optional UX)
+            // reset file display
+            const fileInput = document.getElementById('file');
+            const fileNameEl = document.getElementById('file-name');
             fileInput.value = '';
             fileNameEl.classList.add('hidden');
             fileNameEl.textContent = '';
 
-
-            // info box toggle (punyamu, tetap)
+            // info box toggle
             if (this.value === 'template') {
                 infoTemplate.classList.remove('hidden');
                 infoDirect.classList.add('hidden');
@@ -274,17 +327,49 @@
                 infoDirect.classList.remove('hidden');
             }
         });
-            // ===== File input preview =====
-        const fileInput = document.getElementById('file');
-        const fileNameEl = document.getElementById('file-name');
+    });
 
-        fileInput.addEventListener('change', function () {
-            if (this.files && this.files.length > 0) {
-                fileNameEl.textContent = `File dipilih: ${this.files[0].name}`;
-                fileNameEl.classList.remove('hidden');
-                fileNameEl.classList.add('text-indigo-600', 'font-medium');
-            }
-        });
+    // ===== File input preview =====
+    const fileInput = document.getElementById('file');
+    const fileNameEl = document.getElementById('file-name');
+
+    fileInput.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            fileNameEl.textContent = `File dipilih: ${this.files[0].name}`;
+            fileNameEl.classList.remove('hidden');
+            fileNameEl.classList.add('text-indigo-600', 'font-medium');
+        }
+    });
+
+    // ===== Delete Modal =====
+    function confirmDelete(uploadId, fileName, transactionCount) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        const fileNameEl = document.getElementById('deleteFileName');
+        const impactEl = document.getElementById('deleteImpact');
+        
+        // Set form action
+        form.action = `/penjualan/upload/${uploadId}`;
+        
+        // Set file name
+        fileNameEl.textContent = fileName;
+        
+        // Set impact message
+        impactEl.textContent = `${transactionCount} transaksi akan dinonaktifkan dari dashboard`;
+        
+        // Show modal
+        modal.classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
     });
 </script>
 
