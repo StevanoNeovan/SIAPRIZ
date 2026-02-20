@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\SetMysqlUserContext;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'verified.admin' => \App\Http\Middleware\VerifiedAdminOnly::class,
         ]);
+        
+        $middleware->appendToGroup('web', SetMysqlUserContext::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -112,8 +112,7 @@ class UploadPenjualanController extends Controller
         
         return Storage::disk('public')->download($log->file_path, $log->nama_file);
     }
-
-     /**
+   /**
      * Delete upload log AND semua transaksi terkait
      * Route: DELETE /penjualan/upload/{id}
      */
@@ -122,20 +121,54 @@ class UploadPenjualanController extends Controller
         $log = \App\Models\LogUpload::where('id_perusahaan', auth()->user()->id_perusahaan)
             ->findOrFail($id);
 
-        // 1. Hapus file fisik jika ada
-        if ($log->hasFile()) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($log->file_path);
+        if (!$log->canBeDeleted()) {
+            return redirect()
+                ->route('penjualan.upload')
+                ->with('error', 'Upload yang sedang diproses tidak bisa dihapus.');
         }
 
-        // 2. Hapus semua penjualan_transaksi yang terkait batch ini
-        //    (penjualan_transaksi_detail terhapus otomatis via ON DELETE CASCADE)
-        \App\Models\PenjualanTransaksi::where('id_batch_upload', $id)->delete();
+        try {
+            \DB::beginTransaction();
 
-        // 3. Hapus log upload
-        $log->delete();
+            // 1. Hapus file fisik jika ada
+            if ($log->hasFile()) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($log->file_path);
+            }
 
-        return redirect()
-            ->route('penjualan.upload')
-            ->with('success', 'Upload beserta data transaksinya berhasil dihapus.');
+            // 2. Ambil semua id_transaksi dari batch ini
+            $transactionIds = \App\Models\PenjualanTransaksi::where('id_batch_upload', $id)
+                ->pluck('id_transaksi');
+
+            // 3. Soft delete detail transaksi (karena SoftDeletes, pakai update langsung)
+            if ($transactionIds->isNotEmpty()) {
+                \App\Models\PenjualanTransaksiDetail::whereIn('id_transaksi', $transactionIds)
+                    ->whereNull('deleted_at')
+                    ->update(['deleted_at' => now()]);
+            }
+
+            // 4. Soft delete transaksi
+            \App\Models\PenjualanTransaksi::where('id_batch_upload', $id)
+                ->whereNull('deleted_at')
+                ->update(['deleted_at' => now()]);
+
+            // 5. Soft delete log upload
+            $log->deleted_by = auth()->user()->id_pengguna;
+            $log->save();
+            $log->delete(); // SoftDeletes: mengisi deleted_at
+
+            \DB::commit();
+
+            return redirect()
+                ->route('penjualan.upload')
+                ->with('success', "Upload beserta {$transactionIds->count()} transaksinya berhasil dihapus dari dashboard.");
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Gagal hapus upload: ' . $e->getMessage());
+
+            return redirect()
+                ->route('penjualan.upload')
+                ->with('error', 'Gagal menghapus upload. Silakan coba lagi.');
+        }
     }
 }

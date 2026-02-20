@@ -12,7 +12,7 @@ class DashboardService
     
     public function __construct(DashboardRepositoryInterface $dashboardRepo)
     {
-        $this->dashboardRepo = $dashboardRepo;
+        $this->dashboardRepo = $dashboardRepo;  
     }
     
     /**
@@ -171,7 +171,7 @@ class DashboardService
             'labels' => $labels,
             'pendapatan' => $pendapatan,
             'total_order' => $totalOrder
-        ];
+        ]; 
     }
     
     /**
@@ -201,7 +201,7 @@ class DashboardService
         }
 
         return [
-            'labels' => $labels,
+            'labels' => $labels,    
             'pendapatan' => $pendapatan,
             'total_order' => $totalOrder,
             'colors' => $colors

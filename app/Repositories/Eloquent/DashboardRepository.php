@@ -102,6 +102,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                 ->where('id_perusahaan', $idPerusahaan)
                 ->whereBetween('tanggal_order', [$tanggalMulai, $tanggalAkhir])
                 ->where('status_order', 'selesai')
+                ->where('deleted_at', null)
+                ->where('penjualan_transaksi.deleted_at', null)
                 ->groupBy('tanggal')
                 ->orderBy('tanggal')
                 ->get()
